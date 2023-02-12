@@ -224,15 +224,15 @@ exports.sendEmail = async function (req, res) {
     const mailPoster = nodemailer.createTransport(smtpTransport({
         service: 'gmail',
         auth: {
-            user: 'eotjd0986@gmail.com',
-            pass: 'puxgpaugvcewfyku',
+            user: 'nlcsjejusportshall@gmail.com',
+            pass: 'jpqiebiijnmdatoh',
 
         },
 
     }));
 
     const mailOptions = {
-        from: 'eotjd0986@gmail.com',
+        from: 'nlcsjejusportshall@gmail.com',
         to: email,
         subject: '[NLCS-JEJU-Sportshall] 이메일 인증번호를 안내해드립니다.',
         text: '인증번호는 ' + authNum + ' 입니다.'
