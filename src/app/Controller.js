@@ -7,6 +7,8 @@ const regexEmail = require("regex-email");
 const hmacSHA512 = require('crypto-js/hmac-sha512');
 const jwt = require("jsonwebtoken");
 const secret_config = require("../../config/secret");
+const nodemailer = require("nodemailer");
+var smtpTransport = require('nodemailer-smtp-transport');
 
 var CryptoJS = require("crypto-js");
 var SHA256 = require("crypto-js/sha256");
@@ -212,4 +214,40 @@ exports.voteResult = async function (req, res) {
         "voteResult": result
     }
     return res.send(response(baseResponse.SUCCESS, maxResult));
+}
+
+exports.sendEmail = async function (req, res) {
+    const email = req.query.email;
+    let authNum = Math.random().toString().substr(2, 6);
+    // 7001
+    if (email == null || email == '') return res.send(response(baseResponse.EMAILEMPTY));
+    const mailPoster = nodemailer.createTransport(smtpTransport({
+        service: 'gmail',
+        auth: {
+            user: 'eotjd0986@gmail.com',
+            pass: 'puxgpaugvcewfyku',
+
+        },
+
+    }));
+
+    const mailOptions = {
+        from: 'eotjd0986@gmail.com',
+        to: email,
+        subject: '[NLCS-JEJU-Sportshall] 이메일 인증번호를 안내해드립니다.',
+        text: '인증번호는 ' + authNum + ' 입니다.'
+    };
+
+    const sendMail = (mailOption) => {
+        mailPoster.sendMail(mailOption, function (error, info) {
+            if (error) {
+                //7002
+                return res.send(errResponse(baseResponse.EMAIL_SEND_ERROR))
+            }
+            else {
+                return res.send(response(baseResponse.SUCCESS, { "code": authNum }));
+            }
+        })
+    };
+    sendMail(mailOptions)
 }

@@ -1,3 +1,4 @@
+.github/*
 config/secret.js
 config/database.js
 log/*

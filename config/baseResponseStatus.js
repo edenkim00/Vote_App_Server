@@ -16,5 +16,9 @@ module.exports = {
 
     ALREADY_EXIST_VOTE: { "isSuccess": false, "code": 5001, "message": "이미 투표하셨습니다." },
 
-    DATE_ERROR: { "isSuccess": false, "code": 6001, "message": "아직 투표결과를 알 수 없습니다." }
+    DATE_ERROR: { "isSuccess": false, "code": 6001, "message": "아직 투표결과를 알 수 없습니다." },
+
+    EMAILEMPTY: { "isSuccess": false, "code": 7001, "message": "이메일을 입력해주세요." },
+    EMAIL_SEND_ERROR: { "isSuccess": false, "code": 7002, "message": "이메일 전송에 실패했습니다." },
+
 }

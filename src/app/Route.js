@@ -17,4 +17,5 @@ module.exports = function (app) {
     app.post('/app/vote', jwtMiddleware, controller.vote);
 
     app.get('/app/vote-result', controller.voteResult);
+    app.get('/app/send-email', controller.sendEmail);
 };
