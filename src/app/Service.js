@@ -15,7 +15,6 @@ const {connect} = require("http2");
 
 exports.postUser = async function (params) {
     // params = [email, encodedPassword, name, graduationYear]
-
     const connection = await pool.getConnection(async (conn) => conn);
     const result = await Dao.postUser(connection, params);
     connection.release();
