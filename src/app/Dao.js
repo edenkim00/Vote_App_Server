@@ -82,4 +82,5 @@ module.exports = {
   vote,
   doubleCheckVote,
   voteResult,
+  voteChange,
 };
