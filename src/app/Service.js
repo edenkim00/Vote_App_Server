@@ -37,6 +37,13 @@ exports.vote = async function(params){
     return;
 }
 
+exports.voteChange = async function(params){
+    const connection = await pool.getConnection(async (conn) => conn);
+    const result = await Dao.voteChange(connection, params);
+    connection.release();
+    return;
+}
+
 
 
 // TODO: After 로그인 인증 방법 (JWT)

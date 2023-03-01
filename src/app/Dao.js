@@ -51,6 +51,12 @@ async function vote(connection, params) {
   return result;
 }
 
+async function voteChange(connection, params) {
+  const Query = `Update Vote SET sports = ? where userId = ? and date = ? and grade = ?;`;
+  const [result] = await connection.query(Query, params);
+  return result;
+}
+
 async function doubleCheckVote(connection, params) {
   // @params : [userId, date]
   const Query = `SELECT id from Vote WHERE userID = ? and date = ? and status='activate'`;

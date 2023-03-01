@@ -194,6 +194,30 @@ exports.vote = async function (req, res) {
     return res.send(response(baseResponse.SUCCESS));
 }
 
+exports.voteChange = async function (req, res) {
+    const userId = req.verifiedToken.userId;
+    // 4001
+    if (userId == null) {
+        return res.send(errResponse(baseResponse.TOKEN_ERROR));
+    }
+
+    const { date, sports } = req.body
+    // 1001
+    if (date == null || sports == null) {
+        return res.send(errResponse(baseResponse.WRONG_BODY));
+    }
+
+    const gradeYear = await Provider.getGradeYearUser(userId);
+    if (gradeYear.length == 0) {
+        // 3001
+        return res.send(errResponse(baseResponse.NOT_EXIST_USER));
+    }
+    const grade = getGrade(gradeYear[0]); // HS or MS
+    const params = [sports, userId, date, grade];
+    const result = await Service.voteChange(params);
+    return res.send(response(baseResponse.SUCCESS));
+}
+
 exports.voteResult = async function (req, res) {
     const { date, grade } = req.query
     // 2001
@@ -206,7 +230,6 @@ exports.voteResult = async function (req, res) {
     if (requestDate > currentDate) {
         return res.send(errResponse(baseResponse.DATE_ERROR));
     }
-    // 1/8 homework : TODO => 쿼리 한번만 써서 가장 투표수 많은 종목 알아내는 방식으로 고쳐오기!
 
     const result = await Provider.voteResult([date, grade]);
     const maxResult = {

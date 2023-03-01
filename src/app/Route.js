@@ -18,4 +18,5 @@ module.exports = function (app) {
 
     app.get('/app/vote-result', controller.voteResult);
     app.get('/app/send-email', controller.sendEmail);
+    app.patch('/app/vote-change', jwtMiddleware, controller.voteChange);
 };
