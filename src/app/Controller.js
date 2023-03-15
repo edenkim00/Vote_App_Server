@@ -234,7 +234,8 @@ exports.voteResult = async function (req, res) {
     const result = await Provider.voteResult([date, grade]);
     const maxResult = {
         "date": date,
-        "voteResult": result
+        "voteResult": result.sports,
+        "count": result.count
     }
     return res.send(response(baseResponse.SUCCESS, maxResult));
 }

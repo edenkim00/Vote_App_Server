@@ -74,5 +74,12 @@ exports.voteResult = async function (params) {
     todaySports = "Badminton";
   }
   connection.release();
-  return todaySports
+  return {
+    sports: todaySports,
+    count: {
+      basketball: basketballCount,
+      volleyball: volleyballCount,
+      badminton: badmintonCount,
+    }
+  }
 }
