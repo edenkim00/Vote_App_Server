@@ -1,8 +1,6 @@
 const { pool } = require("../../config/database");
 const Dao = require("./Dao");
 
-// Provider: Read 비즈니스 로직 처리
-
 exports.getUserEmail = async function (email) {
   const connection = await pool.getConnection(async (conn) => conn);
   const result = await Dao.getUserByEmail(connection, email);

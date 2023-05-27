@@ -4,7 +4,6 @@ const baseResponse = require("../../config/baseResponseStatus");
 const { response, errResponse } = require("../../config/response");
 const hmacSHA512 = require('crypto-js/hmac-sha512');
 const jwt = require("jsonwebtoken");
-const secret_config = require("../../config/secret");
 const nodemailer = require("nodemailer");
 var smtpTransport = require('nodemailer-smtp-transport');
 var Base64 = require("crypto-js/enc-base64");
