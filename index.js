@@ -1,6 +1,6 @@
 const baseResponse = require('./config/baseResponseStatus');
 const Controller = require('./src/app/Controller');
-
+require('dotenv').config();
 exports.handler = async function (event) {
     const parsedData = _parseEvent(event);
     if (!parsedData) {
@@ -148,7 +148,7 @@ async function _verifyAccessToken(token) {
     }
     const p = new Promise(
         (resolve, reject) => {
-            jwt.verify(token, secret_config.jwtsecret, (err, verifiedToken) => {
+            jwt.verify(token, process.env.jwtsecret, (err, verifiedToken) => {
                 if (err) reject(err);
                 resolve(verifiedToken)
             })
