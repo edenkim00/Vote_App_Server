@@ -122,7 +122,7 @@ exports.signIn = async function (data, verifiedToken) {
         {
             userId: userId,
         }, // 토큰의 내용(payload)
-        process.env.jwtsecret, // 비밀키
+        process.env.JWT_SECRET, // 비밀키
         {
             expiresIn: "365d",
             subject: "userInfo",

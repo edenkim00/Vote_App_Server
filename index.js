@@ -148,7 +148,7 @@ async function _verifyAccessToken(token) {
     }
     const p = new Promise(
         (resolve, reject) => {
-            jwt.verify(token, process.env.jwtsecret, (err, verifiedToken) => {
+            jwt.verify(token, process.env.JWT_SECRET, (err, verifiedToken) => {
                 if (err) reject(err);
                 resolve(verifiedToken)
             })
