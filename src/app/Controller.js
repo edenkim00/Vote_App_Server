@@ -1,19 +1,14 @@
-const jwtMiddleware = require("../../config/jwtMiddleware");
 const Provider = require("../app/Provider");
 const Service = require("../app/Service");
 const baseResponse = require("../../config/baseResponseStatus");
 const { response, errResponse } = require("../../config/response");
-const regexEmail = require("regex-email");
 const hmacSHA512 = require('crypto-js/hmac-sha512');
 const jwt = require("jsonwebtoken");
 const secret_config = require("../../config/secret");
 const nodemailer = require("nodemailer");
 var smtpTransport = require('nodemailer-smtp-transport');
-
-var CryptoJS = require("crypto-js");
-var SHA256 = require("crypto-js/sha256");
 var Base64 = require("crypto-js/enc-base64");
-const e = require("express");
+require("dotenv").config();
 
 const getGrade = (graduationYear) => {
     const currentYear = new Date().getFullYear()
@@ -24,76 +19,73 @@ const getGrade = (graduationYear) => {
 }
 
 // 회원가입
-exports.postUser = async function (req, res) {
-    console.log("??")
-
-    const { email, password, name, graduationYear } = req.body;
-
+exports.postUser = async function (data, verifiedToken) {
+    const { email, password, name, graduationYear } = data;
     // validation
     // 1001 : body에 빈값있음.
     if (email == null || password == null || name == null || graduationYear == null) {
-        return res.send(errResponse(baseResponse.WRONG_BODY));
+        return errResponse(baseResponse.WRONG_BODY);
     }
 
     // 1002 : 이메일 검증
     const regex = new RegExp('[a-z0-9]+@[a-z]+\.[a-z]{2,3}');
     if (!regex.test(email)) {
-        return res.send(errResponse(baseResponse.WRONG_EMAIL));
+        return errResponse(baseResponse.WRONG_EMAIL);
     }
 
     // 1003 : 비밀번호 길이 문제
     if (password.length < 4 || password.length > 12) {
-        return res.send(errResponse(baseResponse.WRONG_PASSWORD_LENGTH));
+        return errResponse(baseResponse.WRONG_PASSWORD_LENGTH);
     }
 
     // 1004 : 중복확인
     const doubleCheck = await Provider.getUserEmail(email);
     if (doubleCheck.length > 0) {
-        return res.send(errResponse(baseResponse.ALREADY_EXIST_EMAIL));
+        return errResponse(baseResponse.ALREADY_EXIST_EMAIL);
     }
 
     // password 암호화
-    const encoedPassword = Base64.stringify(hmacSHA512(password, 'hojin-sportshall'))
+    const encoedPassword = Base64.stringify(hmacSHA512(password, process.env.PASSWORD_HASHING_NAMESPACE))
 
     const queryParams = [email, encoedPassword, name, graduationYear];
-    const result = await Service.postUser(queryParams);
-    return res.send(response(baseResponse.SUCCESS));
+    await Service.postUser(queryParams);
+    return response(baseResponse.SUCCESS);
 };
 
-exports.forgotPassword = async function (req, res) {
-    const email = req.query.email
-    const graduationYear = req.query.graduationYear
-    const name = req.query.name
+exports.forgotPassword = async function (data, verifiedToken) {
+    const email = data.email
+    const graduationYear = data.graduationYear
+    const name = data.name
 
     // validation
     // 1. 빈값이 있는지 확인
     if (email == null || name == null || graduationYear == null) {
-        return res.send(errResponse(baseResponse.WRONG_QUERY_STRING));
+        return errResponse(baseResponse.WRONG_QUERY_STRING);
     }
 
     // 2. 이메일 형식이 맞는지
     const regex = new RegExp('[a-z0-9]+@[a-z]+\.[a-z]{2,3}');
     if (!regex.test(email)) {
-        return res.send(errResponse(baseResponse.WRONG_EMAIL));
+        return errResponse(baseResponse.WRONG_EMAIL);
     }
 
     const result = await Provider.forgotPassword([email, graduationYear, name]);
     // [{id : 11}] or []
     const isExistedUser = result.length > 0; // true false
-    return res.send(response(baseResponse.SUCCESS, isExistedUser))
+    return response(baseResponse.SUCCESS, isExistedUser)
 }
 
-exports.changePassword = async function (req, res) {
-    const { email, newPassword } = req.body;
+exports.changePassword = async function (data, verifiedToken) {
+    const { email, newPassword } = data;
 
     // 1001 : body에 빈값있음.
     if (!email || !newPassword) {
-        return res.send(errResponse(baseResponse.WRONG_BODY));
+        return errResponse(baseResponse.WRONG_BODY);
     }
 
     // 1003 : 비밀번호 길이 
     if (newPassword.length < 4 || newPassword.length > 12) {
-        return res.send(errResponse(baseResponse.WRONG_PASSWORD_LENGTH));
+        return errResponse(baseResponse.WRONG_PASSWORD_LENGTH);
     }
 
     // 비밀번호 암호화
@@ -102,15 +94,15 @@ exports.changePassword = async function (req, res) {
     const result = await Service.changePassword([
         encoedPassword, email
     ]);
-    return res.send(response(baseResponse.SUCCESS));
+    return response(baseResponse.SUCCESS);
 }
 
-exports.signIn = async function (req, res) {
-    const { email, password } = req.body;
+exports.signIn = async function (data, verifiedToken) {
+    const { email, password } = data;
 
     // 1001 : 바디에 빈 값이 있음.
     if (email == null || password == null) {
-        return res.send(errResponse(baseResponse.WRONG_BODY));
+        return errResponse(baseResponse.WRONG_BODY);
     }
 
     // db에는 암호화된 형식으로 저장되어 있기 때문에 password 암호화해서! 물어봐야됨.
@@ -122,7 +114,7 @@ exports.signIn = async function (req, res) {
     ]);
 
     if (loginResult.length == 0) {
-        return res.send(errResponse(baseResponse.NOT_EXIST_USER));
+        return errResponse(baseResponse.NOT_EXIST_USER);
     }
 
     const userId = loginResult[0].id;
@@ -141,15 +133,14 @@ exports.signIn = async function (req, res) {
         "userId": userId,
         "jwtToken": token,
     }
-    return res.send(response(baseResponse.SUCCESS, result));
+    return response(baseResponse.SUCCESS, result);
 }
 
-exports.mypageInfo = async function (req, res) {
-    const userId = req.verifiedToken.userId;
-
+exports.mypageInfo = async function (data, verifiedToken) {
+    const userId = verifiedToken.userId;
     // 4001
     if (!userId) {
-        return res.send(errResponse(baseResponse.TOKEN_ERROR));
+        return errResponse(baseResponse.TOKEN_ERROR);
     }
 
     const userInfo = await Provider.getUserInfo(userId);
@@ -160,75 +151,75 @@ exports.mypageInfo = async function (req, res) {
         "name": name,
         "grade": grade,
     }
-    return res.send(response(baseResponse.SUCCESS, result));
+    return response(baseResponse.SUCCESS, result);
 }
 
-exports.vote = async function (req, res) {
-    const userId = req.verifiedToken.userId;
+exports.vote = async function (data, verifiedToken) {
+    const userId = verifiedToken.userId;
     // 4001
     if (userId == null) {
-        return res.send(errResponse(baseResponse.TOKEN_ERROR));
+        return errResponse(baseResponse.TOKEN_ERROR);
     }
 
-    const { date, sports } = req.body
+    const { date, sports } = data
     // 1001
     if (date == null || sports == null) {
-        return res.send(errResponse(baseResponse.WRONG_BODY));
+        return errResponse(baseResponse.WRONG_BODY);
     }
 
     // 5001 
     const doubleCheckResult = await Provider.doubleCheckVote([userId, date]);
     if (doubleCheckResult.length > 0) {
-        return res.send(errResponse(baseResponse.ALREADY_EXIST_VOTE));
+        return errResponse(baseResponse.ALREADY_EXIST_VOTE);
     }
 
     const gradeYear = await Provider.getGradeYearUser(userId);
     if (gradeYear.length == 0) {
         // 3001
-        return res.send(errResponse(baseResponse.NOT_EXIST_USER));
+        return errResponse(baseResponse.NOT_EXIST_USER);
     }
     const grade = getGrade(gradeYear[0]); // HS or MS
     const params = [userId, sports, date, grade];
 
     const result = await Service.vote(params);
-    return res.send(response(baseResponse.SUCCESS));
+    return response(baseResponse.SUCCESS);
 }
 
-exports.voteChange = async function (req, res) {
-    const userId = req.verifiedToken.userId;
+exports.voteChange = async function (data, verifiedToken) {
+    const userId = verifiedToken.userId;
     // 4001
     if (userId == null) {
-        return res.send(errResponse(baseResponse.TOKEN_ERROR));
+        return errResponse(baseResponse.TOKEN_ERROR);
     }
 
-    const { date, sports } = req.body
+    const { date, sports } = data
     // 1001
     if (date == null || sports == null) {
-        return res.send(errResponse(baseResponse.WRONG_BODY));
+        return errResponse(baseResponse.WRONG_BODY);
     }
 
     const gradeYear = await Provider.getGradeYearUser(userId);
     if (gradeYear.length == 0) {
         // 3001
-        return res.send(errResponse(baseResponse.NOT_EXIST_USER));
+        return errResponse(baseResponse.NOT_EXIST_USER);
     }
     const grade = getGrade(gradeYear[0]); // HS or MS
     const params = [sports, userId, date, grade];
     const result = await Service.voteChange(params);
-    return res.send(response(baseResponse.SUCCESS));
+    return response(baseResponse.SUCCESS);
 }
 
-exports.voteResult = async function (req, res) {
-    const { date, grade } = req.query
+exports.voteResult = async function (data, verifiedToken) {
+    const { date, grade } = data
     // 2001
     if (date == null || grade == null) {
-        return res.send(errResponse(baseResponse.WRONG_QUERY_STRING));
+        return errResponse(baseResponse.WRONG_QUERY_STRING);
     }
     const currentDate = new Date()
     const requestDate = new Date(date)
     // 6001
     if (requestDate > currentDate) {
-        return res.send(errResponse(baseResponse.DATE_ERROR));
+        return errResponse(baseResponse.DATE_ERROR);
     }
 
     const result = await Provider.voteResult([grade, date]);
@@ -237,19 +228,19 @@ exports.voteResult = async function (req, res) {
         "voteResult": result.sports,
         "count": result.count
     }
-    return res.send(response(baseResponse.SUCCESS, maxResult));
+    return response(baseResponse.SUCCESS, maxResult);
 }
 
-exports.sendEmail = async function (req, res) {
-    const email = req.query.email;
+exports.sendEmail = async function (data, verifiedToken) {
+    const email = data.email;
     let authNum = Math.random().toString().substr(2, 6);
     // 7001
-    if (email == null || email == '') return res.send(response(baseResponse.EMAILEMPTY));
+    if (email == null || email == '') return response(baseResponse.EMAILEMPTY);
     const mailPoster = nodemailer.createTransport(smtpTransport({
         service: 'gmail',
         auth: {
             user: 'nlcsjejusportshall@gmail.com',
-            pass: 'jpqiebiijnmdatoh',
+            pass: process.env.EMAIL_AUTH_PASSWORD,
 
         },
 
@@ -266,10 +257,10 @@ exports.sendEmail = async function (req, res) {
         mailPoster.sendMail(mailOption, function (error, info) {
             if (error) {
                 //7002
-                return res.send(errResponse(baseResponse.EMAIL_SEND_ERROR))
+                return errResponse(baseResponse.EMAIL_SEND_ERROR)
             }
             else {
-                return res.send(response(baseResponse.SUCCESS, { "code": authNum }));
+                return response(baseResponse.SUCCESS, { "code": authNum });
             }
         })
     };
