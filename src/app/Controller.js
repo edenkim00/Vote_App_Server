@@ -95,7 +95,7 @@ exports.changePassword = async function (data, verifiedToken) {
     }
 
     // 비밀번호 암호화
-    const encoedPassword = Base64.stringify(hmacSHA512(newPassword, 'hojin-sportshall'))
+    const encoedPassword = Base64.stringify(hmacSHA512(newPassword, process.env.PASSWORD_HASHING_NAMESPACE))
 
     const result = await Service.changePassword([
         encoedPassword, email
@@ -154,12 +154,13 @@ exports.mypageInfo = async function (data, verifiedToken) {
     }
 
     const userInfo = await Provider.getUserInfo(userId);
-    const { name, graduationYear } = userInfo[0]
+    const { name, graduationYear, votingWeight } = userInfo[0]
 
     const grade = getGrade(graduationYear);
     const result = {
         "name": name,
         "grade": grade,
+        "votingWeight": votingWeight,
     }
     return response(baseResponse.SUCCESS, result);
 }
@@ -170,10 +171,12 @@ exports.vote = async function (data, verifiedToken) {
     if (userId == null) {
         return errResponse(baseResponse.TOKEN_ERROR);
     }
-
-    if (!(voteData && votingWeight && year && month && week)) {
+    const { voteData, votingWeight, year, month, week, graduationYear } = data;
+    // 1001
+    if (!(userId && voteData && votingWeight && year && month && week && graduationYear)) {
         return errResponse(baseResponse.WRONG_BODY);
-    }    /* date: String - "YYYY-MM-DD"
+    }
+    /* date: String - "YYYY-MM-DD"
     // voteData: {
         "2023-01-12": {
             1: "basketball",
@@ -190,67 +193,51 @@ exports.vote = async function (data, verifiedToken) {
     // votingWeight : Number - 4~8
     */
 
-    // 1001
-    if (date == null || voteData == null || votingWeight == null) {
-        return errResponse(baseResponse.WRONG_BODY);
-    }
+
     // validate date
     const voteStartAndEndDate = getWeekDateRange(year, month, week);
     // year 2023, month 05, week 4 -> startDate: 2023-05-22, endDate: 2023-05-31
     const dateList = Object.keys(voteData);
-    for (let i = 0; i < dateList.length; i++) {
-        const date = dateList[i];
+    for (const [date, vote] of Object.entries(voteData)) {
         if (date < voteStartAndEndDate.startDate || date > voteStartAndEndDate.endDate) {
             // 8001
             return errResponse(baseResponse.WRONG_VOTE_DATA);
         }
-        for (let j = 1; j <= 3; j++) {
-            if (!voteData[date][String(j)]) {
-                // 8001
-                return errResponse(baseResponse.WRONG_VOTE_DATA);
-            }
+        if (!(["1", "2", "3".every(e => Object.keys(vote[date]).includes(e))])) {
+            // 8001
+            return errResponse(baseResponse.WRONG_VOTE_DATA);
         }
     }
 
     const today = new Date()
-    const todayDate = parseInt(today.getDate());
-    const todayWeek = Math.min(((todayDate - 1) / 7) + 1, 4);
+    const todayDay = parseInt(today.getDate());
+    const todayWeek = Math.min(parseInt((todayDay - 1) / 7) + 1, 4);
     const todayMonth = parseInt(today.getMonth()) + 1;
     const todayYear = parseInt(today.getFullYear());
     if (year <= todayYear) {
         if (year < todayYear) {
             // 8001
-            return errResponse(baseResponse.WRONG_VOTE_DATA);
+            return errResponse(baseResponse.WRONG_VOTE_DATE);
         }
-        // year == todayYear
         if (month <= todayMonth) {
             // 8001
-            return errResponse(baseResponse.WRONG_VOTE_DATA);
+            return errResponse(baseResponse.WRONG_VOTE_DATE);
         }
         if (month == (todayMonth + 1) && week <= todayWeek) {
             // 8001
-            return errResponse(baseResponse.WRONG_VOTE_DATA);
+            return errResponse(baseResponse.WRONG_VOTE_DATE);
         }
     }
 
-
-
-
-    // 5001 - TODO: Migration
     const doubleCheckResult = await Provider.doubleCheckVote([userId, dateList[0]]);
     if (doubleCheckResult.length > 0) {
         return errResponse(baseResponse.ALREADY_EXIST_VOTE);
     }
 
-    const gradeYear = await Provider.getGradeYearUser(userId);
-    if (gradeYear.length == 0) {
-        // 3001
-        return errResponse(baseResponse.NOT_EXIST_USER);
-    }
-    const grade = getGrade(gradeYear[0]); // HS or MS
+    const grade = getGrade(parseInt(graduationYear)); // HS or MS
     const params = [userId, grade, voteData, votingWeight, year, month, week];
 
-    const result = await Service.vote(params);
+    await Service.vote(params);
     return response(baseResponse.SUCCESS);
 }
 
@@ -270,38 +257,34 @@ exports.voteChange = async function (data, verifiedToken) {
     const voteStartAndEndDate = getWeekDateRange(year, month, week);
     // year 2023, month 05, week 4 -> startDate: 2023-05-22, endDate: 2023-05-31
     const dateList = Object.keys(voteData);
-    for (let i = 0; i < dateList.length; i++) {
-        const date = dateList[i];
+    for (const [date, vote] of Object.entries(voteData)) {
         if (date < voteStartAndEndDate.startDate || date > voteStartAndEndDate.endDate) {
             // 8001
             return errResponse(baseResponse.WRONG_VOTE_DATA);
         }
-        for (let j = 1; j <= 3; j++) {
-            if (!voteData[date][String(j)]) {
-                // 8001
-                return errResponse(baseResponse.WRONG_VOTE_DATA);
-            }
+        if (!(["1", "2", "3".every(e => Object.keys(vote[date]).includes(e))])) {
+            // 8001
+            return errResponse(baseResponse.WRONG_VOTE_DATA);
         }
     }
 
     const today = new Date()
-    const todayDate = parseInt(today.getDate());
-    const todayWeek = Math.min(((todayDate - 1) / 7) + 1, 4);
+    const todayDay = parseInt(today.getDate());
+    const todayWeek = Math.min(parseInt((todayDay - 1) / 7) + 1, 4);
     const todayMonth = parseInt(today.getMonth()) + 1;
     const todayYear = parseInt(today.getFullYear());
     if (year <= todayYear) {
         if (year < todayYear) {
             // 8001
-            return errResponse(baseResponse.WRONG_VOTE_DATA);
+            return errResponse(baseResponse.WRONG_VOTE_DATE);
         }
-        // year == todayYear
         if (month <= todayMonth) {
             // 8001
-            return errResponse(baseResponse.WRONG_VOTE_DATA);
+            return errResponse(baseResponse.WRONG_VOTE_DATE);
         }
         if (month == (todayMonth + 1) && week <= todayWeek) {
             // 8001
-            return errResponse(baseResponse.WRONG_VOTE_DATA);
+            return errResponse(baseResponse.WRONG_VOTE_DATE);
         }
     }
 
@@ -320,25 +303,28 @@ exports.voteChange = async function (data, verifiedToken) {
 
 // TODO
 exports.voteResult = async function (data, verifiedToken) {
-    const { date, grade } = data
+    const { grade, year, month, week } = data
     // 2001
-    if (date == null || grade == null) {
+    if (!(grade && year && month && week)) {
         return errResponse(baseResponse.WRONG_QUERY_STRING);
     }
-    const currentDate = new Date()
-    const requestDate = new Date(date)
+    const today = new Date()
+    const todayDay = parseInt(today.getDate());
+    const todayWeek = Math.min(parseInt((todayDay - 1) / 7) + 1, 4);
+    const todayMonth = parseInt(today.getMonth()) + 1;
+    const todayYear = parseInt(today.getFullYear());
     // 6001
-    if (requestDate > currentDate) {
+    if (year > todayYear) {
         return errResponse(baseResponse.DATE_ERROR);
     }
-
-    const result = await Provider.voteResult([grade, date]);
-    const maxResult = {
-        "date": date,
-        "voteResult": result.sports,
-        "count": result.count
+    // 6002
+    if (year == todayYear && month > todayMonth && week > todayWeek) {
+        return errResponse(baseResponse.VOTE_NOT_END);
     }
-    return response(baseResponse.SUCCESS, maxResult);
+    
+    const dateInfo = getWeekDateRange(year, month, week);
+    const result = await Provider.voteResult([grade, startDate, endDate]);
+    return response(baseResponse.SUCCESS, result);
 }
 
 exports.sendEmail = async function (data, verifiedToken) {
@@ -351,9 +337,7 @@ exports.sendEmail = async function (data, verifiedToken) {
         auth: {
             user: 'nlcsjejusportshall@gmail.com',
             pass: process.env.EMAIL_AUTH_PASSWORD,
-
         },
-
     }));
 
     const mailOptions = {
@@ -362,17 +346,16 @@ exports.sendEmail = async function (data, verifiedToken) {
         subject: '[NLCS-JEJU-Sportshall] 이메일 인증번호를 안내해드립니다.',
         text: '인증번호는 ' + authNum + ' 입니다.'
     };
-
-    const sendMail = (mailOption) => {
-        mailPoster.sendMail(mailOption, function (error, info) {
+    return new Promise((resolve, reject) => {
+        mailPoster.sendMail(mailOptions, function (error, info) {
             if (error) {
                 //7002
-                return errResponse(baseResponse.EMAIL_SEND_ERROR)
+                console.error("[Send Email]: ", err)
+                return resolve(errResponse(baseResponse.EMAIL_SEND_ERROR))
             }
             else {
-                return response(baseResponse.SUCCESS, { "code": authNum });
+                resolve(response(baseResponse.SUCCESS, { "code": authNum }));
             }
-        })
-    };
-    sendMail(mailOptions)
+        });
+    })
 }

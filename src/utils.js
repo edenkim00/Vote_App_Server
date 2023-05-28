@@ -107,8 +107,19 @@ function getWeekDateRange(year, month, week) {
     return {
         startDate: startDate.format('YYYY-MM-DD'),
         endDate: endDate.format('YYYY-MM-DD'),
+        dateList: getWeekDateList(startDate, endDate),
     }
 }
+
+function _getWeekDateList(startDate, endDate) {
+    const dateList = [];
+    let currentDate = startDate;
+    while (currentDate <= endDate) {
+        dateList.push(currentDate.format('YYYY-MM-DD'));
+        currentDate = currentDate.clone().add(1, 'd');
+    }
+    return dateList;
+};
 
 module.exports = {
     parseEvent,

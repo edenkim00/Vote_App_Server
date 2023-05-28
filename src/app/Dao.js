@@ -34,7 +34,7 @@ async function isUserExist(connection, params) {
 }
 
 async function getUserInfo(connection, userId) {
-  const Query = `SELECT name, graduationYear from User WHERE id=? and status='activate';`;
+  const Query = `SELECT name, graduationYear, votingWeight from User WHERE id=? and status='activate';`;
   const [result] = await connection.query(Query, userId);
   return result;
 }
@@ -73,7 +73,7 @@ async function doubleCheckVote(connection, params) {
 }
 
 async function voteResult(connection, params) {
-  const Query = `SELECT sports,count(sports) as count FROM Vote WHERE grade = ? and date = ? and status="activate" group by sports`
+  const Query = `SELECT sports, sum (totalPoint) as point FROM Vote WHERE grade = ? and date >= ? and date <= ? and status="activate" group by sports, date`
   const [result] = await connection.query(Query, params);
   return [result]
 }
