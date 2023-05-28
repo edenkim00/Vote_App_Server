@@ -9,7 +9,7 @@ var smtpTransport = require('nodemailer-smtp-transport');
 var Base64 = require("crypto-js/enc-base64");
 require("dotenv").config();
 
-const getGrade = (graduationYear) => {
+function getGrade(graduationYear) {
     const currentYear = new Date().getFullYear()
     const currentMonth = new Date().getMonth() + 1;
     const diff = 13 - (graduationYear - currentYear) +
@@ -111,11 +111,12 @@ exports.signIn = async function (data, verifiedToken) {
         email,
         encoedPassword,
     ]);
-
+    console.log(loginResult)
+    console.log("@" + loginResult.length)
     if (loginResult.length == 0) {
         return errResponse(baseResponse.NOT_EXIST_USER);
     }
-
+    
     const userId = loginResult[0].id;
     const token = await jwt.sign(
         {
@@ -264,4 +265,35 @@ exports.sendEmail = async function (data, verifiedToken) {
         })
     };
     sendMail(mailOptions)
+}
+
+exports.vote = async function (data, verifiedToken) {
+    const userId = verifiedToken.userId;
+    // 4001
+    if (userId == null) {
+        return errResponse(baseResponse.TOKEN_ERROR);
+    }
+
+    const { year, month, week, sports } = data
+    // 1001
+    if (date == null || sports == null) {
+        return errResponse(baseResponse.WRONG_BODY);
+    }
+
+    // 5001 
+    const doubleCheckResult = await Provider.doubleCheckVote([userId, date]);
+    if (doubleCheckResult.length > 0) {
+        return errResponse(baseResponse.ALREADY_EXIST_VOTE);
+    }
+
+    const gradeYear = await Provider.getGradeYearUser(userId);
+    if (gradeYear.length == 0) {
+        // 3001
+        return errResponse(baseResponse.NOT_EXIST_USER);
+    }
+    const grade = getGrade(gradeYear[0]); // HS or MS
+    const params = [userId, sports, date, grade];
+
+    const result = await Service.vote(params);
+    return response(baseResponse.SUCCESS);
 }
