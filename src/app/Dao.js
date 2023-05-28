@@ -15,7 +15,7 @@ async function forgotPassword(connection, params) {
 
 //회원가입
 async function postUser(connection, params) {
-  const Query = `INSERT INTO User(email, password, name, graduationYear) VALUES (?,?,?,?);`;
+  const Query = `INSERT INTO User(email, password, name, graduationYear, votingWeight) VALUES (?,?,?,?,?);`;
   await connection.query(Query, params);
   return;
 }
@@ -28,7 +28,7 @@ async function changePassword(connection, params) {
 }
 
 async function isUserExist(connection, params) {
-  const Query = `SELECT id from User WHERE email=? and password=? and status='activate';`;
+  const Query = `SELECT id, votingWeight from User WHERE email=? and password=? and status='activate';`;
   const [result] = await connection.query(Query, params);
   return result;
 }
@@ -45,8 +45,16 @@ async function getGradeYearUser(connection, userId) {
   return result;
 }
 
-async function vote(connection, params) {
-  const Query = `INSERT INTO Vote(userId, sports, date, grade) Values(?,?,?,?);`;
+async function vote(connection, paramsList) {
+  let paramsString = ``;
+  for (let i = 0; i < paramsList.length; i++) {
+    paramsString += `(${paramsList[i][0]}, '${paramsList[i][1]}', '${paramsList[i][2]}', '${paramsList[i][3]}', ${paramsList[i][4]}, ${paramsList[i][5]}, ${paramsList[i][6]})`;
+    if (i !== paramsList.length - 1) {
+      paramsString += `, `;
+    }
+  }
+
+  const Query = `INSERT INTO Vote(userId, sports, date, grade, userPoint, pickPoint, totalPoint) Values ${paramsString};`;
   const [result] = await connection.query(Query, params);
   return result;
 }
@@ -70,6 +78,12 @@ async function voteResult(connection, params) {
   return [result]
 }
 
+async function voteDelete(connection, params) {
+  const Query = `UPDATE Vote SET status = 'deleted' WHERE userId = ? and date >= ? and date <= ?;`;
+  const [result] = await connection.query(Query, params);
+  return result;
+}
+
 module.exports = {
   getUserByEmail,
   postUser,
@@ -82,4 +96,5 @@ module.exports = {
   doubleCheckVote,
   voteResult,
   voteChange,
+  voteDelete,
 };

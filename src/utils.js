@@ -14,7 +14,8 @@ const methodToPath = {
 
 function parseEvent(event) {
     try {
-        const body = JSON.parse(event.body);
+        
+        const body = event?.body ? JSON.parse(event.body) : {};
         const queryString = event.queryStringParameters || {};
         const { method, path } = event?.requestContext?.http;
         if (!(path && method)) return null;
@@ -94,7 +95,7 @@ async function verifyAccessToken(token) {
 }
 
 function getWeekDateRange(year, month, week) {
-    const paddedMonth = month.padStart(2, "0");
+    const paddedMonth = month.padStart(2, "0"); // 3 -> 03, 12 -> 12
     let startDate, endDate;
     if (week == "4") {
         startDate = moment(`${year}-${paddedMonth}`).startOf('month').add(week - 1, 'week');
@@ -109,15 +110,8 @@ function getWeekDateRange(year, month, week) {
     }
 }
 
-function isAvailableVoteDate(startDate) {
-    const today = moment().format('YYYY-MM-DD');
-    const oneMonthAfter = moment().add(1, 'month').format('YYYY-MM-DD');
-    return oneMonthAfter <= startDate 
-}
-
 module.exports = {
     parseEvent,
     verifyAccessToken,
     getWeekDateRange,
-    isAvailableVoteDate,
 }

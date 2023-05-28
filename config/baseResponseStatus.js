@@ -7,6 +7,7 @@ module.exports = {
     WRONG_PASSWORD_LENGTH: { "isSuccess": false, "code": 1003, "message": "비밀번호 길이는 4~12글자로 맞춰주세요." },
     ALREADY_EXIST_EMAIL: { "isSuccess": false, "code": 1004, "message": "이미 가입된 이메일입니다." },
     TOKEN_VERIFICATION_FAILURE: { "isSuccess": false, "code": 1005, "message": "JWT TOKEN ERROR" },
+    WRONG_VOTING_WEIGHT: { "isSuccess": false, "code": 1006, "message": "투표권은 4~8 사이의 정수로 맞춰주세요." },
 
     INVALID_REQUEST: { "isSuccess": false, "code": 2000, "message": "잘못된 요청입니다." },
 
@@ -22,5 +23,7 @@ module.exports = {
 
     EMAILEMPTY: { "isSuccess": false, "code": 7001, "message": "이메일을 입력해주세요." },
     EMAIL_SEND_ERROR: { "isSuccess": false, "code": 7002, "message": "이메일 전송에 실패했습니다." },
+
+    WRONG_VOTE_DATA: { "isSuccess": false, "code": 8001, "message": "투표 데이터를 다시 확인해주세요." },
 
 }

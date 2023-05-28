@@ -8,6 +8,7 @@ const nodemailer = require("nodemailer");
 var smtpTransport = require('nodemailer-smtp-transport');
 var Base64 = require("crypto-js/enc-base64");
 require("dotenv").config();
+const { getWeekDateRange } = require('../utils');
 
 function getGrade(graduationYear) {
     const currentYear = new Date().getFullYear()
@@ -19,7 +20,8 @@ function getGrade(graduationYear) {
 
 // 회원가입
 exports.postUser = async function (data, verifiedToken) {
-    const { email, password, name, graduationYear } = data;
+    const { email, password, name, graduationYear, votingWeight } = data;
+
     // validation
     // 1001 : body에 빈값있음.
     if (email == null || password == null || name == null || graduationYear == null) {
@@ -43,10 +45,15 @@ exports.postUser = async function (data, verifiedToken) {
         return errResponse(baseResponse.ALREADY_EXIST_EMAIL);
     }
 
+    // 1006: votingWeight은 4~8 사이의 정수
+    if (votingWeight < 4 || votingWeight > 8) {
+        return errResponse(baseResponse.WRONG_VOTING_WEIGHT);
+    }
+
     // password 암호화
     const encoedPassword = Base64.stringify(hmacSHA512(password, process.env.PASSWORD_HASHING_NAMESPACE))
 
-    const queryParams = [email, encoedPassword, name, graduationYear];
+    const queryParams = [email, encoedPassword, name, graduationYear, votingWeight];
     await Service.postUser(queryParams);
     return response(baseResponse.SUCCESS);
 };
@@ -105,19 +112,21 @@ exports.signIn = async function (data, verifiedToken) {
     }
 
     // db에는 암호화된 형식으로 저장되어 있기 때문에 password 암호화해서! 물어봐야됨.
-    const encoedPassword = Base64.stringify(hmacSHA512(password, 'hojin-sportshall'))
+    const encoedPassword = Base64.stringify(hmacSHA512(password, process.env.PASSWORD_HASHING_NAMESPACE))
 
     const loginResult = await Provider.isUserExist([
         email,
         encoedPassword,
     ]);
-    console.log(loginResult)
-    console.log("@" + loginResult.length)
+
     if (loginResult.length == 0) {
         return errResponse(baseResponse.NOT_EXIST_USER);
     }
-    
+    if (!(loginResult[0]?.id && loginResult[0]?.votingWeight)) {
+        return errResponse(baseResponse.NOT_EXIST_USER);
+    }
     const userId = loginResult[0].id;
+    const votingWeight = loginResult[0].votingWeight;
     const token = await jwt.sign(
         {
             userId: userId,
@@ -132,6 +141,7 @@ exports.signIn = async function (data, verifiedToken) {
     const result = {
         "userId": userId,
         "jwtToken": token,
+        "votingWeight": votingWeight,
     }
     return response(baseResponse.SUCCESS, result);
 }
@@ -161,14 +171,73 @@ exports.vote = async function (data, verifiedToken) {
         return errResponse(baseResponse.TOKEN_ERROR);
     }
 
-    const { date, sports } = data
+    if (!(voteData && votingWeight && year && month && week)) {
+        return errResponse(baseResponse.WRONG_BODY);
+    }    /* date: String - "YYYY-MM-DD"
+    // voteData: {
+        "2023-01-12": {
+            1: "basketball",
+            2: "badminton",
+            3: "volleyball",
+        },
+        "2023-03-13": {
+            1: "basketball",
+            2: "volleyball",
+            3: "badminton",
+        }
+        ...
+    }
+    // votingWeight : Number - 4~8
+    */
+
     // 1001
-    if (date == null || sports == null) {
+    if (date == null || voteData == null || votingWeight == null) {
         return errResponse(baseResponse.WRONG_BODY);
     }
+    // validate date
+    const voteStartAndEndDate = getWeekDateRange(year, month, week);
+    // year 2023, month 05, week 4 -> startDate: 2023-05-22, endDate: 2023-05-31
+    const dateList = Object.keys(voteData);
+    for (let i = 0; i < dateList.length; i++) {
+        const date = dateList[i];
+        if (date < voteStartAndEndDate.startDate || date > voteStartAndEndDate.endDate) {
+            // 8001
+            return errResponse(baseResponse.WRONG_VOTE_DATA);
+        }
+        for (let j = 1; j <= 3; j++) {
+            if (!voteData[date][String(j)]) {
+                // 8001
+                return errResponse(baseResponse.WRONG_VOTE_DATA);
+            }
+        }
+    }
 
-    // 5001 
-    const doubleCheckResult = await Provider.doubleCheckVote([userId, date]);
+    const today = new Date()
+    const todayDate = parseInt(today.getDate());
+    const todayWeek = Math.min(((todayDate - 1) / 7) + 1, 4);
+    const todayMonth = parseInt(today.getMonth()) + 1;
+    const todayYear = parseInt(today.getFullYear());
+    if (year <= todayYear) {
+        if (year < todayYear) {
+            // 8001
+            return errResponse(baseResponse.WRONG_VOTE_DATA);
+        }
+        // year == todayYear
+        if (month <= todayMonth) {
+            // 8001
+            return errResponse(baseResponse.WRONG_VOTE_DATA);
+        }
+        if (month == (todayMonth + 1) && week <= todayWeek) {
+            // 8001
+            return errResponse(baseResponse.WRONG_VOTE_DATA);
+        }
+    }
+
+
+
+
+    // 5001 - TODO: Migration
+    const doubleCheckResult = await Provider.doubleCheckVote([userId, dateList[0]]);
     if (doubleCheckResult.length > 0) {
         return errResponse(baseResponse.ALREADY_EXIST_VOTE);
     }
@@ -179,7 +248,7 @@ exports.vote = async function (data, verifiedToken) {
         return errResponse(baseResponse.NOT_EXIST_USER);
     }
     const grade = getGrade(gradeYear[0]); // HS or MS
-    const params = [userId, sports, date, grade];
+    const params = [userId, grade, voteData, votingWeight, year, month, week];
 
     const result = await Service.vote(params);
     return response(baseResponse.SUCCESS);
@@ -192,10 +261,48 @@ exports.voteChange = async function (data, verifiedToken) {
         return errResponse(baseResponse.TOKEN_ERROR);
     }
 
-    const { date, sports } = data
+    const { voteData, votingWeight, year, month, week } = data
     // 1001
-    if (date == null || sports == null) {
+    if (!(voteData && votingWeight && year && month && week)) {
         return errResponse(baseResponse.WRONG_BODY);
+    }
+    // validate date
+    const voteStartAndEndDate = getWeekDateRange(year, month, week);
+    // year 2023, month 05, week 4 -> startDate: 2023-05-22, endDate: 2023-05-31
+    const dateList = Object.keys(voteData);
+    for (let i = 0; i < dateList.length; i++) {
+        const date = dateList[i];
+        if (date < voteStartAndEndDate.startDate || date > voteStartAndEndDate.endDate) {
+            // 8001
+            return errResponse(baseResponse.WRONG_VOTE_DATA);
+        }
+        for (let j = 1; j <= 3; j++) {
+            if (!voteData[date][String(j)]) {
+                // 8001
+                return errResponse(baseResponse.WRONG_VOTE_DATA);
+            }
+        }
+    }
+
+    const today = new Date()
+    const todayDate = parseInt(today.getDate());
+    const todayWeek = Math.min(((todayDate - 1) / 7) + 1, 4);
+    const todayMonth = parseInt(today.getMonth()) + 1;
+    const todayYear = parseInt(today.getFullYear());
+    if (year <= todayYear) {
+        if (year < todayYear) {
+            // 8001
+            return errResponse(baseResponse.WRONG_VOTE_DATA);
+        }
+        // year == todayYear
+        if (month <= todayMonth) {
+            // 8001
+            return errResponse(baseResponse.WRONG_VOTE_DATA);
+        }
+        if (month == (todayMonth + 1) && week <= todayWeek) {
+            // 8001
+            return errResponse(baseResponse.WRONG_VOTE_DATA);
+        }
     }
 
     const gradeYear = await Provider.getGradeYearUser(userId);
@@ -204,11 +311,14 @@ exports.voteChange = async function (data, verifiedToken) {
         return errResponse(baseResponse.NOT_EXIST_USER);
     }
     const grade = getGrade(gradeYear[0]); // HS or MS
-    const params = [sports, userId, date, grade];
-    const result = await Service.voteChange(params);
+    const params = [userId, grade, voteData, votingWeight, year, month, week];
+
+    await Service.voteDelete(userId, year, month, week);
+    await Service.vote(params);
     return response(baseResponse.SUCCESS);
 }
 
+// TODO
 exports.voteResult = async function (data, verifiedToken) {
     const { date, grade } = data
     // 2001
@@ -265,35 +375,4 @@ exports.sendEmail = async function (data, verifiedToken) {
         })
     };
     sendMail(mailOptions)
-}
-
-exports.vote = async function (data, verifiedToken) {
-    const userId = verifiedToken.userId;
-    // 4001
-    if (userId == null) {
-        return errResponse(baseResponse.TOKEN_ERROR);
-    }
-
-    const { year, month, week, sports } = data
-    // 1001
-    if (date == null || sports == null) {
-        return errResponse(baseResponse.WRONG_BODY);
-    }
-
-    // 5001 
-    const doubleCheckResult = await Provider.doubleCheckVote([userId, date]);
-    if (doubleCheckResult.length > 0) {
-        return errResponse(baseResponse.ALREADY_EXIST_VOTE);
-    }
-
-    const gradeYear = await Provider.getGradeYearUser(userId);
-    if (gradeYear.length == 0) {
-        // 3001
-        return errResponse(baseResponse.NOT_EXIST_USER);
-    }
-    const grade = getGrade(gradeYear[0]); // HS or MS
-    const params = [userId, sports, date, grade];
-
-    const result = await Service.vote(params);
-    return response(baseResponse.SUCCESS);
 }
