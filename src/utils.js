@@ -1,5 +1,5 @@
-const moment = require('moment');
 const Controller = require('./app/Controller');
+const jwt = require("jsonwebtoken");
 const methodToPath = {
     '/app/user-signup': 'POST',
     '/app/signin': 'POST',
@@ -22,6 +22,7 @@ function parseEvent(event) {
         if (!(methodToPath[path] && methodToPath[path] === method)) return null;
         let next = null;
         let tokenRequired = false;
+        let accessToken = event?.headers?.['x-access-token'];
         switch (path) {
             case '/app/user-signup':
                 next = Controller.postUser;
@@ -62,6 +63,7 @@ function parseEvent(event) {
             path,
             tokenRequired,
             next,
+            accessToken,
             data: {
                 ...body,
                 ...queryString
@@ -90,39 +92,14 @@ async function verifyAccessToken(token) {
     try {
         return (await p); // verified Token
     } catch (err) {
+        console.error("[AUTH]: ", err)
         return null;
     }
 }
 
-function getWeekDateRange(year, month, week) {
-    const paddedMonth = month.padStart(2, "0"); // 3 -> 03, 12 -> 12
-    let startDate, endDate;
-    if (week == "4") {
-        startDate = moment(`${year}-${paddedMonth}`).startOf('month').add(week - 1, 'week');
-        endDate = moment(`${year}-${paddedMonth}`).endOf('month');
-    } else {
-        startDate = moment(`${year}-${paddedMonth}`).startOf('month').add(week - 1, 'week');
-        endDate = moment(`${year}-${paddedMonth}`).startOf('month').add(week, 'week').subtract(1, 'day');
-    }
-    return {
-        startDate: startDate.format('YYYY-MM-DD'),
-        endDate: endDate.format('YYYY-MM-DD'),
-        dateList: getWeekDateList(startDate, endDate),
-    }
-}
 
-function _getWeekDateList(startDate, endDate) {
-    const dateList = [];
-    let currentDate = startDate;
-    while (currentDate <= endDate) {
-        dateList.push(currentDate.format('YYYY-MM-DD'));
-        currentDate = currentDate.clone().add(1, 'd');
-    }
-    return dateList;
-};
 
 module.exports = {
     parseEvent,
     verifyAccessToken,
-    getWeekDateRange,
 }

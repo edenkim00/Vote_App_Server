@@ -30,6 +30,7 @@ exports.changePassword = async function (params) {
 exports.vote = async function (params) {
     // const params = [userId, grade, voteData, votingWeight, year, month, week];
     const votes = _caculateVotePoint(params[3], params[2]);
+    console.log(votes)
     const paramsList = votes.map(vote => [params[0], vote.sports, vote.date, params[1], vote.userPoint, vote.pickPoint, vote.totalPoint]);
     try {
         const connection = await pool.getConnection(async (conn) => conn);
@@ -68,7 +69,7 @@ function _caculateVotePoint(voteWeight, voteData) {
         for (let j = 0; j < 3; j++) {
             result.push({
                 date: currentDate,
-                sports: currentVoteData[j + 1],
+                sports: currentVoteData[String(j + 1)],
                 userPoint: voteWeight,
                 pickPoint: j + 1,
                 totalPoint: voteWeight * (j + 1),

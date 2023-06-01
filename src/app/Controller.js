@@ -7,9 +7,36 @@ const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 var smtpTransport = require('nodemailer-smtp-transport');
 var Base64 = require("crypto-js/enc-base64");
-require("dotenv").config();
-const { getWeekDateRange } = require('../utils');
+const moment = require('moment');
 
+require("dotenv").config();
+
+function getWeekDateRange(year, month, week) {
+    const paddedMonth = month.padStart(2, "0"); // 3 -> 03, 12 -> 12
+    let startDate, endDate;
+    if (week == "4") {
+        startDate = moment(`${year}-${paddedMonth}`).startOf('month').add(week - 1, 'week');
+        endDate = moment(`${year}-${paddedMonth}`).endOf('month');
+    } else {
+        startDate = moment(`${year}-${paddedMonth}`).startOf('month').add(week - 1, 'week');
+        endDate = moment(`${year}-${paddedMonth}`).startOf('month').add(week, 'week').subtract(1, 'day');
+    }
+    return {
+        startDate: startDate.format('YYYY-MM-DD'),
+        endDate: endDate.format('YYYY-MM-DD'),
+        dateList: _getWeekDateList(startDate, endDate),
+    }
+}
+
+function _getWeekDateList(startDate, endDate) {
+    const dateList = [];
+    let currentDate = startDate;
+    while (currentDate <= endDate) {
+        dateList.push(currentDate.format('YYYY-MM-DD'));
+        currentDate = currentDate.clone().add(1, 'd');
+    }
+    return dateList;
+};
 function getGrade(graduationYear) {
     const currentYear = new Date().getFullYear()
     const currentMonth = new Date().getMonth() + 1;
@@ -122,11 +149,12 @@ exports.signIn = async function (data, verifiedToken) {
     if (loginResult.length == 0) {
         return errResponse(baseResponse.NOT_EXIST_USER);
     }
-    if (!(loginResult[0]?.id && loginResult[0]?.votingWeight)) {
+    if (!(loginResult[0].id && loginResult[0].votingWeight && loginResult[0].graduationYear)) {
         return errResponse(baseResponse.NOT_EXIST_USER);
     }
     const userId = loginResult[0].id;
     const votingWeight = loginResult[0].votingWeight;
+    const graduationYear = loginResult[0].graduationYear;
     const token = await jwt.sign(
         {
             userId: userId,
@@ -142,6 +170,7 @@ exports.signIn = async function (data, verifiedToken) {
         "userId": userId,
         "jwtToken": token,
         "votingWeight": votingWeight,
+        "graduationYear": graduationYear,
     }
     return response(baseResponse.SUCCESS, result);
 }
@@ -176,23 +205,6 @@ exports.vote = async function (data, verifiedToken) {
     if (!(userId && voteData && votingWeight && year && month && week && graduationYear)) {
         return errResponse(baseResponse.WRONG_BODY);
     }
-    /* date: String - "YYYY-MM-DD"
-    // voteData: {
-        "2023-01-12": {
-            1: "basketball",
-            2: "badminton",
-            3: "volleyball",
-        },
-        "2023-03-13": {
-            1: "basketball",
-            2: "volleyball",
-            3: "badminton",
-        }
-        ...
-    }
-    // votingWeight : Number - 4~8
-    */
-
 
     // validate date
     const voteStartAndEndDate = getWeekDateRange(year, month, week);
@@ -203,7 +215,7 @@ exports.vote = async function (data, verifiedToken) {
             // 8001
             return errResponse(baseResponse.WRONG_VOTE_DATA);
         }
-        if (!(["1", "2", "3".every(e => Object.keys(vote[date]).includes(e))])) {
+        if (!(["1", "2", "3"].every(e => Object.keys(vote).includes(e)))) {
             // 8001
             return errResponse(baseResponse.WRONG_VOTE_DATA);
         }
@@ -211,9 +223,9 @@ exports.vote = async function (data, verifiedToken) {
 
     const today = new Date()
     const todayDay = parseInt(today.getDate());
-    const todayWeek = Math.min(parseInt((todayDay - 1) / 7) + 1, 4);
-    const todayMonth = parseInt(today.getMonth()) + 1;
-    const todayYear = parseInt(today.getFullYear());
+    const todayWeek = String(Math.min(parseInt((todayDay - 1) / 7) + 1, 4));
+    const todayMonth = String((today.getMonth()) + 1);
+    const todayYear = String(today.getFullYear());
     if (year <= todayYear) {
         if (year < todayYear) {
             // 8001
@@ -223,7 +235,7 @@ exports.vote = async function (data, verifiedToken) {
             // 8001
             return errResponse(baseResponse.WRONG_VOTE_DATE);
         }
-        if (month == (todayMonth + 1) && week <= todayWeek) {
+        if (parseInt(month) == (parseInt(todayMonth) + 1) && week <= todayWeek) {
             // 8001
             return errResponse(baseResponse.WRONG_VOTE_DATE);
         }
@@ -236,8 +248,10 @@ exports.vote = async function (data, verifiedToken) {
 
     const grade = getGrade(parseInt(graduationYear)); // HS or MS
     const params = [userId, grade, voteData, votingWeight, year, month, week];
-
-    await Service.vote(params);
+    const result = await Service.vote(params);
+    if (!result) {
+        return errResponse(baseResponse.WRONG_VOTE_DATA);
+    }
     return response(baseResponse.SUCCESS);
 }
 
@@ -248,21 +262,21 @@ exports.voteChange = async function (data, verifiedToken) {
         return errResponse(baseResponse.TOKEN_ERROR);
     }
 
-    const { voteData, votingWeight, year, month, week } = data
+    const { voteData, votingWeight, year, month, week, graduationYear } = data;
+
     // 1001
-    if (!(voteData && votingWeight && year && month && week)) {
+    if (!(voteData && votingWeight && year && month && week && graduationYear)) {
         return errResponse(baseResponse.WRONG_BODY);
     }
     // validate date
     const voteStartAndEndDate = getWeekDateRange(year, month, week);
     // year 2023, month 05, week 4 -> startDate: 2023-05-22, endDate: 2023-05-31
-    const dateList = Object.keys(voteData);
     for (const [date, vote] of Object.entries(voteData)) {
         if (date < voteStartAndEndDate.startDate || date > voteStartAndEndDate.endDate) {
             // 8001
             return errResponse(baseResponse.WRONG_VOTE_DATA);
         }
-        if (!(["1", "2", "3".every(e => Object.keys(vote[date]).includes(e))])) {
+        if (!(["1", "2", "3"].every(e => Object.keys(vote).includes(e)))) {
             // 8001
             return errResponse(baseResponse.WRONG_VOTE_DATA);
         }
@@ -288,22 +302,27 @@ exports.voteChange = async function (data, verifiedToken) {
         }
     }
 
-    const gradeYear = await Provider.getGradeYearUser(userId);
-    if (gradeYear.length == 0) {
-        // 3001
-        return errResponse(baseResponse.NOT_EXIST_USER);
-    }
-    const grade = getGrade(gradeYear[0]); // HS or MS
+    const grade = getGrade(gradeYear); // HS or MS
     const params = [userId, grade, voteData, votingWeight, year, month, week];
 
-    await Service.voteDelete(userId, year, month, week);
-    await Service.vote(params);
+    const deleteResult = await Service.voteDelete(userId, year, month, week);
+    if (!deleteResult) {
+        return errResponse(baseResponse.WRONG_VOTE_DATA);
+    }
+    const result = await Service.vote(params);
+    if (!result) {
+        return errResponse(baseResponse.WRONG_VOTE_DATA);
+    }
     return response(baseResponse.SUCCESS);
 }
 
-// TODO
 exports.voteResult = async function (data, verifiedToken) {
-    const { grade, year, month, week } = data
+    const userId = verifiedToken.userId;
+    // 4001
+    if (userId == null) {
+        return errResponse(baseResponse.TOKEN_ERROR);
+    }
+    const { grade, year, month, week } = data;
     // 2001
     if (!(grade && year && month && week)) {
         return errResponse(baseResponse.WRONG_QUERY_STRING);
@@ -314,16 +333,26 @@ exports.voteResult = async function (data, verifiedToken) {
     const todayMonth = parseInt(today.getMonth()) + 1;
     const todayYear = parseInt(today.getFullYear());
     // 6001
-    if (year > todayYear) {
+    if (year > todayYear + 1) {
         return errResponse(baseResponse.DATE_ERROR);
     }
     // 6002
+    if (year == todayYear + 1) {
+        if (month != 1 || todayMonth != 12 || week > todayWeek) {
+            return errResponse(baseResponse.VOTE_NOT_END);
+        }
+    }
     if (year == todayYear && month > todayMonth && week > todayWeek) {
         return errResponse(baseResponse.VOTE_NOT_END);
     }
-    
+
     const dateInfo = getWeekDateRange(year, month, week);
-    const result = await Provider.voteResult([grade, startDate, endDate]);
+    const result = await Provider.voteResult([grade, dateInfo.startDate, dateInfo.endDate]);
+    console.log(result);
+    console.log('VOTE');
+    if (!result) {
+        return errResponse(baseResponse.WRONG_VOTE_DATA);
+    }
     return response(baseResponse.SUCCESS, result);
 }
 

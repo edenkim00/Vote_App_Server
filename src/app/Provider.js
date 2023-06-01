@@ -43,25 +43,33 @@ exports.doubleCheckVote = async function (params) {
   return result;
 }
 
-exports.voteResult = async function (params, dateList) {
+exports.voteResult = async function (params) {
   const connection = await pool.getConnection(async (conn) => conn);
-  const [result] = (await Dao.voteResult(connection, params));
-  const voteResult = {};
-  for (const date of dateList) {
-    voteResult[date] = {
-      basketball: 0,
-      volleyball: 0,
-      badminton: 0,
-    }
+  const result = await Dao.voteResult(connection, params);
+  if (!(result && result.length)) {
+    return null;
   }
-
-  for (const row of result) {
-    if (!(voteResult[row.date] && voteResult[row.date][row.sports])) {
-      continue;
+  console.log(result[0])
+  let votingResult = {};
+  for (const item of result[0]) {
+    const dateString = item.date.toISOString().split('T')[0];
+    if (votingResult[dateString]) {
+      if (parseInt(votingResult[dateString].point) < parseInt(item.point)) {
+        votingResult[dateString] = {
+          point: item.point,
+          sports: item.sports,
+        }
+      }
     }
-    voteResult[row.date][row.sports] = row.point;
+    else {
+      votingResult[dateString] = {
+        point: item.point,
+        sports: item.sports,
+      }
+    }
+    console.log(votingResult)
+    console.dir(votingResult)
   }
   connection.release();
-
-  return voteResult;
+  return votingResult;
 }

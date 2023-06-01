@@ -28,7 +28,7 @@ async function changePassword(connection, params) {
 }
 
 async function isUserExist(connection, params) {
-  const Query = `SELECT id, votingWeight from User WHERE email=? and password=? and status='activate';`;
+  const Query = `SELECT id, votingWeight, graduationYear from User WHERE email=? and password=? and status='activate';`;
   const [result] = await connection.query(Query, params);
   return result;
 }
@@ -55,7 +55,7 @@ async function vote(connection, paramsList) {
   }
 
   const Query = `INSERT INTO Vote(userId, sports, date, grade, userPoint, pickPoint, totalPoint) Values ${paramsString};`;
-  const [result] = await connection.query(Query, params);
+  const [result] = await connection.query(Query);
   return result;
 }
 
@@ -73,7 +73,7 @@ async function doubleCheckVote(connection, params) {
 }
 
 async function voteResult(connection, params) {
-  const Query = `SELECT sports, sum (totalPoint) as point FROM Vote WHERE grade = ? and date >= ? and date <= ? and status="activate" group by sports, date`
+  const Query = `SELECT sports, date, sum (totalPoint) as point FROM Vote WHERE grade = ? and date >= ? and date <= ? and status="activate" group by sports, date`
   const [result] = await connection.query(Query, params);
   return [result]
 }
