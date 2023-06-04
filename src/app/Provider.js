@@ -66,8 +66,6 @@ exports.voteResult = async function (params) {
         sports: item.sports,
       }
     }
-    console.log(votingResult)
-    console.dir(votingResult)
   }
   connection.release();
   return votingResult;

@@ -351,8 +351,6 @@ exports.voteResult = async function (data, verifiedToken) {
 
     const dateInfo = getWeekDateRange(year, month, week);
     const result = await Provider.voteResult([grade, dateInfo.startDate, dateInfo.endDate]);
-    console.log(result);
-    console.log('VOTE');
     if (!result) {
         return errResponse(baseResponse.WRONG_VOTE_DATA);
     }
@@ -424,8 +422,6 @@ exports.sendingEmailResult = async function (data, verifiedToken) {
     }
     for (const row of result) {
         const rowDate = row.date.toISOString().split('T')[0];
-        console.log(rowDate)
-        console.log('rowDate', rowDate)
         if (row.grade == 'MS') {
             csvDataMS[rowDate][row.sports] = row.point;
             csvDataMS[rowDate][`${row.sports}Count`] = row.count;
@@ -451,7 +447,6 @@ exports.sendingEmailResult = async function (data, verifiedToken) {
             getMaxSports(csvDataHS[date].Basketball, csvDataHS[date].Badminton, csvDataHS[date].Volleyball)
         ]));
     const csv = msCSV.concat([['', '', '', '', '']]).concat(hsCSV);
-    console.log("CSV", csv)
     const csvContent = csv.map(row => row.join(',')).join('\n');
     fs.writeFileSync(csvFilePath, csvContent);
     const transporter = nodemailer.createTransport({
