@@ -1,7 +1,9 @@
 const baseResponse = require('./config/baseResponseStatus');
 const { parseEvent, verifyAccessToken } = require('./src/utils');
+// const { sendEmail } = require('./src/csv');
 require('dotenv').config();
 exports.handler = async function (event) {
+    // await sendEmail();
     const parsedData = parseEvent(event);
     if (!parsedData) {
         return {
@@ -11,7 +13,7 @@ exports.handler = async function (event) {
     }
     console.log(parsedData)
     if (parsedData.tokenRequired) {
-        
+
         const verifiedToken = await verifyAccessToken(parsedData?.accessToken);
         console.log(verifiedToken)
         if (!verifiedToken) {

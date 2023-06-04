@@ -10,11 +10,12 @@ const methodToPath = {
     '/app/vote-result': 'GET',
     '/app/vote-change': 'PATCH',
     '/app/mypage-info': 'GET',
+    '/app/sending-email-result': 'GET',
 }
 
 function parseEvent(event) {
     try {
-        
+
         const body = event?.body ? JSON.parse(event.body) : {};
         const queryString = event.queryStringParameters || {};
         const { method, path } = event?.requestContext?.http;
@@ -53,6 +54,10 @@ function parseEvent(event) {
                 break;
             case '/app/mypage-info':
                 next = Controller.mypageInfo;
+                tokenRequired = true;
+                break;
+            case '/app/sending-email-result':
+                next = Controller.sendingEmailResult;
                 tokenRequired = true;
                 break;
             default:

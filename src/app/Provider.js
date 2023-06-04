@@ -49,7 +49,6 @@ exports.voteResult = async function (params) {
   if (!(result && result.length)) {
     return null;
   }
-  console.log(result[0])
   let votingResult = {};
   for (const item of result[0]) {
     const dateString = item.date.toISOString().split('T')[0];
@@ -72,4 +71,11 @@ exports.voteResult = async function (params) {
   }
   connection.release();
   return votingResult;
+}
+
+exports.getAdminResult = async function (params) {
+  const connection = await pool.getConnection(async (conn) => conn);
+  const result = await Dao.getAdminResult(connection, params);
+  connection.release();
+  return result;
 }

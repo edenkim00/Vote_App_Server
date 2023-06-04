@@ -8,6 +8,9 @@ const nodemailer = require("nodemailer");
 var smtpTransport = require('nodemailer-smtp-transport');
 var Base64 = require("crypto-js/enc-base64");
 const moment = require('moment');
+const fs = require('fs');
+const path = require('path');
+const csvFilePath = path.join('/tmp', 'data.csv');
 
 require("dotenv").config();
 
@@ -302,7 +305,7 @@ exports.voteChange = async function (data, verifiedToken) {
         }
     }
 
-    const grade = getGrade(gradeYear); // HS or MS
+    const grade = getGrade(parseInt(graduationYear)); // HS or MS
     const params = [userId, grade, voteData, votingWeight, year, month, week];
 
     const deleteResult = await Service.voteDelete(userId, year, month, week);
@@ -387,4 +390,120 @@ exports.sendEmail = async function (data, verifiedToken) {
             }
         });
     })
+}
+
+exports.sendingEmailResult = async function (data, verifiedToken) {
+    const userId = verifiedToken.userId;
+    if (userId != 1) {
+        return errResponse(baseResponse.TOKEN_ERROR);
+    }
+    const { email, year, month } = data;
+    if (!(email && year && month)) {
+        return errResponse(baseResponse.WRONG_BODY);
+    }
+    const paddedMonth = month.toString().padStart(2, '0');
+    const startDate = moment(`${year}-${paddedMonth}`).startOf('month')
+    const endDate = moment(`${year}-${paddedMonth}`).endOf('month')
+    const dateList = _getWeekDateList(startDate, endDate);
+
+    const header = ['basketball', 'volleyball', 'badminton']
+    const csvDataMS = Object.fromEntries(dateList.map(date => [date, {
+        Basketball: 0,
+        BasketballCount: 0,
+        Volleyball: 0,
+        VolleyballCount: 0,
+        Badminton: 0,
+        BadmintonCount: 0,
+    }]));
+    const csvDataHS = JSON.parse(JSON.stringify(csvDataMS));
+
+
+    const result = await Provider.getAdminResult([startDate.format('YYYY-MM-DD'), endDate.format('YYYY-MM-DD')]);
+    if (!(result && result.length)) {
+        return errResponse(baseResponse.WRONG_VOTE_DATA);
+    }
+    for (const row of result) {
+        const rowDate = row.date.toISOString().split('T')[0];
+        console.log(rowDate)
+        console.log('rowDate', rowDate)
+        if (row.grade == 'MS') {
+            csvDataMS[rowDate][row.sports] = row.point;
+            csvDataMS[rowDate][`${row.sports}Count`] = row.count;
+        }
+        else {
+            csvDataHS[rowDate][row.sports] = row.point;
+            csvDataHS[rowDate][`${row.sports}Count`] = row.count;
+        }
+    }
+    const msCSV = [['MS', 'Basketball', 'Badminton', 'Volleyball', 'Voted #1 Sports']].concat(dateList.map(date =>
+        [date,
+            `${csvDataMS[date].Basketball} (${csvDataMS[date].BasketballCount})`,
+            `${csvDataMS[date].Badminton} (${csvDataMS[date].BadmintonCount})`,
+            `${csvDataMS[date].Volleyball} (${csvDataMS[date].VolleyballCount})`,
+            getMaxSports(csvDataMS[date].Basketball, csvDataMS[date].Badminton, csvDataMS[date].Volleyball)
+        ]));
+
+    const hsCSV = [['HS', 'Basketball', 'Badminton', 'Volleyball', 'Voted #1 Sports']].concat(dateList.map(date =>
+        [date,
+            `${csvDataHS[date].Basketball} (${csvDataHS[date].BasketballCount})`,
+            `${csvDataHS[date].Badminton} (${csvDataHS[date].BadmintonCount})`,
+            `${csvDataHS[date].Volleyball} (${csvDataHS[date].VolleyballCount})`,
+            getMaxSports(csvDataHS[date].Basketball, csvDataHS[date].Badminton, csvDataHS[date].Volleyball)
+        ]));
+    const csv = msCSV.concat([['', '', '', '', '']]).concat(hsCSV);
+    console.log("CSV", csv)
+    const csvContent = csv.map(row => row.join(',')).join('\n');
+    fs.writeFileSync(csvFilePath, csvContent);
+    const transporter = nodemailer.createTransport({
+        service: 'Gmail',
+        auth: {
+            user: 'nlcsjejusportshall@gmail.com',
+            pass: 'jpqiebiijnmdatoh'
+        }
+    });
+
+    // 메일 옵션 설정
+    const mailOptions = {
+        from: 'nlcsjejusportshall@gmail.com',
+        to: 'eotjd0986@naver.com',
+        subject: `${year}년 ${month}월 투표 결과`,
+        text: 'CSV 파일이 첨부되었습니다.',
+        attachments: [
+            {
+                filename: 'data.csv',
+                path: csvFilePath
+            }
+        ]
+    };
+    const promise = new Promise((resolve, reject) => {
+        transporter.sendMail(mailOptions, function (error, info) {
+            if (error) {
+                console.log(error);
+            } else {
+                console.log('Email sent: ' + info.response);
+            }
+
+            // 생성한 CSV 파일 삭제
+            fs.unlinkSync(csvFilePath);
+            resolve();
+        });
+    });
+    try {
+        await promise;
+    } catch (err) {
+        console.error('Email sending to admin: ', err);
+        return errResponse(baseResponse.EMAIL_SEND_ERROR);
+    }
+
+    return response(baseResponse.SUCCESS, result);
+}
+
+function getMaxSports(basketball, volleyball, badminton) {
+    if (basketball >= volleyball && basketball >= badminton) {
+        return 'Basketball';
+    }
+    else if (volleyball >= basketball && volleyball >= badminton) {
+        return 'Volleyball';
+    }
+    return 'Badminton';
 }

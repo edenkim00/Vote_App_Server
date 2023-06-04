@@ -1,6 +1,33 @@
 const { pool } = require("../../config/database");
-const { getWeekDateRange } = require("../utils");
 const Dao = require("./Dao");
+
+const moment = require('moment');
+function getWeekDateRange(year, month, week) {
+    const paddedMonth = month.padStart(2, "0"); // 3 -> 03, 12 -> 12
+    let startDate, endDate;
+    if (week == "4") {
+        startDate = moment(`${year}-${paddedMonth}`).startOf('month').add(week - 1, 'week');
+        endDate = moment(`${year}-${paddedMonth}`).endOf('month');
+    } else {
+        startDate = moment(`${year}-${paddedMonth}`).startOf('month').add(week - 1, 'week');
+        endDate = moment(`${year}-${paddedMonth}`).startOf('month').add(week, 'week').subtract(1, 'day');
+    }
+    return {
+        startDate: startDate.format('YYYY-MM-DD'),
+        endDate: endDate.format('YYYY-MM-DD'),
+        dateList: _getWeekDateList(startDate, endDate),
+    }
+}
+
+function _getWeekDateList(startDate, endDate) {
+    const dateList = [];
+    let currentDate = startDate;
+    while (currentDate <= endDate) {
+        dateList.push(currentDate.format('YYYY-MM-DD'));
+        currentDate = currentDate.clone().add(1, 'd');
+    }
+    return dateList;
+};
 
 exports.postUser = async function (params) {
     // params = [email, encodedPassword, name, graduationYear, votingWeight]

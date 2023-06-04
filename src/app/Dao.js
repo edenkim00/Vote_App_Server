@@ -84,6 +84,12 @@ async function voteDelete(connection, params) {
   return result;
 }
 
+async function getAdminResult(connection, params) {
+  const Query = `Select grade, date, sports, sum(totalPoint) as point, count(id) as count from Vote where date >= ? and date <= ? and status = 'activate' group by grade, sports, date order by date;`;
+  const [result] = await connection.query(Query, params);
+  return result;
+}
+
 module.exports = {
   getUserByEmail,
   postUser,
@@ -97,4 +103,5 @@ module.exports = {
   voteResult,
   voteChange,
   voteDelete,
+  getAdminResult,
 };
