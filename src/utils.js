@@ -1,4 +1,3 @@
-const Controller = require("./app/Controller");
 const jwt = require("jsonwebtoken");
 const { ENDPOINT_METADATA } = require("./metadata");
 function parseEvent(event) {

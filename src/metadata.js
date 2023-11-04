@@ -1,3 +1,4 @@
+const Controller = require("./app/Controller");
 const ENDPOINT_METADATA = {
   "/app/user-signup": {
     method: "POST",
