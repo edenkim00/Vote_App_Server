@@ -11,56 +11,13 @@ const moment = require("moment");
 const fs = require("fs");
 const path = require("path");
 const csvFilePath = path.join("/tmp", "data.csv");
-
+const { getGrade, getWeekDateRange, getWeekDateList } = require("./utils");
 require("dotenv").config();
 
-function getWeekDateRange(year, month, week) {
-  const paddedMonth = month.padStart(2, "0"); // 3 -> 03, 12 -> 12
-  let startDate, endDate;
-  if (week == "4") {
-    startDate = moment(`${year}-${paddedMonth}`)
-      .startOf("month")
-      .add(week - 1, "week");
-    endDate = moment(`${year}-${paddedMonth}`).endOf("month");
-  } else {
-    startDate = moment(`${year}-${paddedMonth}`)
-      .startOf("month")
-      .add(week - 1, "week");
-    endDate = moment(`${year}-${paddedMonth}`)
-      .startOf("month")
-      .add(week, "week")
-      .subtract(1, "day");
-  }
-  return {
-    startDate: startDate.format("YYYY-MM-DD"),
-    endDate: endDate.format("YYYY-MM-DD"),
-    dateList: _getWeekDateList(startDate, endDate),
-  };
-}
-
-function _getWeekDateList(startDate, endDate) {
-  const dateList = [];
-  let currentDate = startDate;
-  while (currentDate <= endDate) {
-    dateList.push(currentDate.format("YYYY-MM-DD"));
-    currentDate = currentDate.clone().add(1, "d");
-  }
-  return dateList;
-}
-function getGrade(graduationYear) {
-  const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth() + 1;
-  const diff =
-    13 - (graduationYear - currentYear) + (currentMonth >= 8 ? 1 : 0);
-  return diff > 9 ? "HS" : "MS";
-}
-
-// 회원가입
 exports.postUser = async function (data, verifiedToken) {
   const { email, password, name, graduationYear, votingWeight } = data;
 
-  // validation
-  // 1001 : body에 빈값있음.
+  // 1001 : Empty Body
   if (
     email == null ||
     password == null ||
@@ -70,29 +27,24 @@ exports.postUser = async function (data, verifiedToken) {
     return errResponse(baseResponse.WRONG_BODY);
   }
 
-  // 1002 : 이메일 검증
+  // 1002 : Email Validation
   const regex = new RegExp("[a-z0-9]+@[a-z]+.[a-z]{2,3}");
   if (!regex.test(email)) {
     return errResponse(baseResponse.WRONG_EMAIL);
   }
 
-  // 1003 : 비밀번호 길이 문제
+  // 1003 : Wrong Password Length
   if (password.length < 4 || password.length > 12) {
     return errResponse(baseResponse.WRONG_PASSWORD_LENGTH);
   }
 
-  // 1004 : 중복확인
+  // 1004 : Already Exist Email
   const doubleCheck = await Provider.getUserEmail(email);
   if (doubleCheck.length > 0) {
     return errResponse(baseResponse.ALREADY_EXIST_EMAIL);
   }
 
-  // 1006: votingWeight은 4~8 사이의 정수
-  if (votingWeight < 4 || votingWeight > 8) {
-    return errResponse(baseResponse.WRONG_VOTING_WEIGHT);
-  }
-
-  // password 암호화
+  // password encryption
   const encodedPassword = Base64.stringify(
     hmacSHA512(password, process.env.PASSWORD_HASHING_NAMESPACE)
   );
@@ -108,28 +60,6 @@ exports.postUser = async function (data, verifiedToken) {
   return response(baseResponse.SUCCESS);
 };
 
-exports.forgotPassword = async function (data, verifiedToken) {
-  const email = data.email;
-  const graduationYear = data.graduationYear;
-  const name = data.name;
-
-  // validation
-  // 1. 빈값이 있는지 확인
-  if (email == null || name == null || graduationYear == null) {
-    return errResponse(baseResponse.WRONG_QUERY_STRING);
-  }
-
-  // 2. 이메일 형식이 맞는지
-  const regex = new RegExp("[a-z0-9]+@[a-z]+.[a-z]{2,3}");
-  if (!regex.test(email)) {
-    return errResponse(baseResponse.WRONG_EMAIL);
-  }
-
-  const result = await Provider.forgotPassword([email, graduationYear, name]);
-  // [{id : 11}] or []
-  const isExistedUser = result.length > 0; // true false
-  return response(baseResponse.SUCCESS, isExistedUser);
-};
 
 exports.changePassword = async function (data, verifiedToken) {
   const { email, newPassword } = data;
@@ -443,7 +373,7 @@ exports.sendingEmailResult = async function (data, verifiedToken) {
   const paddedMonth = month.toString().padStart(2, "0");
   const startDate = moment(`${year}-${paddedMonth}`).startOf("month");
   const endDate = moment(`${year}-${paddedMonth}`).endOf("month");
-  const dateList = _getWeekDateList(startDate, endDate);
+  const dateList = getWeekDateList(startDate, endDate);
 
   const header = ["basketball", "volleyball", "badminton"];
   const csvDataMS = Object.fromEntries(

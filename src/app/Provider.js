@@ -17,9 +17,6 @@ exports.getUserEmail = async function (email) {
   return await select(Dao.getUserByEmail, email);
 };
 
-exports.forgotPassword = async function (params) {
-  return await select(Dao.forgotPassword, params);
-};
 
 exports.isUserExist = async function (params) {
   return await select(Dao.isUserExist, params);

@@ -1,4 +1,3 @@
-//중복확인
 async function getUserByEmail(connection, email) {
   const Query = `
     select id from User where email = ? and status='activate';
@@ -6,21 +5,19 @@ async function getUserByEmail(connection, email) {
   const [result] = await connection.query(Query, email);
   return result;
 }
-//비번찾기검사
+
 async function forgotPassword(connection, params) {
   const Query = `select id from User where email= ?  and graduationYear = ? and name = ? and status='activate';`;
   const [result] = await connection.query(Query, params);
   return result;
 }
 
-//회원가입
 async function postUser(connection, params) {
   const Query = `INSERT INTO User(email, password, name, graduationYear, votingWeight) VALUES (?,?,?,?,?);`;
   await connection.query(Query, params);
   return;
 }
 
-//비밀번호 변경
 async function changePassword(connection, params) {
   const Query = `UPDATE User set password=? WHERE email=? and status = 'activate';`;
   await connection.query(Query, params);
@@ -66,7 +63,6 @@ async function voteChange(connection, params) {
 }
 
 async function doubleCheckVote(connection, params) {
-  // @params : [userId, date]
   const Query = `SELECT id from Vote WHERE userID = ? and date = ? and status='activate'`;
   const [result] = await connection.query(Query, params);
   return result;
