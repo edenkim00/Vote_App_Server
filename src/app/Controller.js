@@ -93,13 +93,13 @@ exports.postUser = async function (data, verifiedToken) {
   }
 
   // password 암호화
-  const encoedPassword = Base64.stringify(
+  const encodedPassword = Base64.stringify(
     hmacSHA512(password, process.env.PASSWORD_HASHING_NAMESPACE)
   );
 
   const queryParams = [
     email,
-    encoedPassword,
+    encodedPassword,
     name,
     graduationYear,
     votingWeight,
@@ -162,9 +162,14 @@ exports.signIn = async function (data, verifiedToken) {
   }
 
   // db에는 암호화된 형식으로 저장되어 있기 때문에 password 암호화해서! 물어봐야됨.
-  const encoedPassword = Base64.stringify(
+  const encodedPassword = Base64.stringify(
     hmacSHA512(password, process.env.PASSWORD_HASHING_NAMESPACE)
   );
+  const loginResult = await Provider.isUserExist([email, encodedPassword]);
+
+  if (loginResult.length == 0) {
+    return errResponse(baseResponse.NOT_EXIST_USER);
+  }
 
   if (!(loginResult[0]?.id && loginResult[0]?.graduationYear)) {
     return errResponse(baseResponse.NOT_EXIST_USER);

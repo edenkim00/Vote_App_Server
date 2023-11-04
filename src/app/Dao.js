@@ -73,9 +73,9 @@ async function doubleCheckVote(connection, params) {
 }
 
 async function voteResult(connection, params) {
-  const Query = `SELECT sports, date, sum (totalPoint) as point FROM Vote WHERE grade = ? and date >= ? and date <= ? and status="activate" group by sports, date`
+  const Query = `SELECT sports, date, sum (totalPoint) as point FROM Vote WHERE grade = ? and date >= ? and date <= ? and status="activate" group by sports, date`;
   const [result] = await connection.query(Query, params);
-  return [result]
+  return [result];
 }
 
 async function voteDelete(connection, params) {
