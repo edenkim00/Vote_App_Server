@@ -12,12 +12,12 @@ const ENDPOINT_METADATA = {
   },
   "/app/change-password": {
     method: "PATCH",
-    tokenRequired: true,
+    tokenRequired: false,
     next: Controller.changePassword,
   },
   "/app/request-email-validation": {
     method: "POST",
-    tokenRequired: true,
+    tokenRequired: false,
     next: Controller.sendEmail,
   },
   "/app/vote": {
@@ -34,6 +34,9 @@ const ENDPOINT_METADATA = {
     method: "PATCH",
     tokenRequired: true,
     next: Controller.voteChange,
+    extraData: {
+      edit: true,
+    },
   },
   "/app/mypage-info": {
     method: "GET",

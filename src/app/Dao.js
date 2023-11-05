@@ -13,7 +13,7 @@ async function forgotPassword(connection, params) {
 }
 
 async function postUser(connection, params) {
-  const Query = `INSERT INTO User(email, password, name, graduationYear, votingWeight) VALUES (?,?,?,?,?);`;
+  const Query = `INSERT INTO User(email, password, name, graduationYear, sex) VALUES (?,?,?,?,?);`;
   await connection.query(Query, params);
   return;
 }
@@ -25,13 +25,13 @@ async function changePassword(connection, params) {
 }
 
 async function isUserExist(connection, params) {
-  const Query = `SELECT id, votingWeight, graduationYear from User WHERE email=? and password=? and status='activate';`;
+  const Query = `SELECT id, sex, graduationYear from User WHERE email=? and password=? and status='activate';`;
   const [result] = await connection.query(Query, params);
   return result;
 }
 
 async function getUserInfo(connection, userId) {
-  const Query = `SELECT name, graduationYear, votingWeight from User WHERE id=? and status='activate';`;
+  const Query = `SELECT name, graduationYear, sex from User WHERE id=? and status='activate';`;
   const [result] = await connection.query(Query, userId);
   return result;
 }
@@ -42,16 +42,19 @@ async function getGradeYearUser(connection, userId) {
   return result;
 }
 
-async function vote(connection, paramsList) {
-  let paramsString = ``;
-  for (let i = 0; i < paramsList.length; i++) {
-    paramsString += `(${paramsList[i][0]}, '${paramsList[i][1]}', '${paramsList[i][2]}', '${paramsList[i][3]}', ${paramsList[i][4]}, ${paramsList[i][5]}, ${paramsList[i][6]})`;
-    if (i !== paramsList.length - 1) {
-      paramsString += `, `;
-    }
-  }
-
-  const Query = `INSERT INTO Vote(userId, sports, date, grade, userPoint, pickPoint, totalPoint) Values ${paramsString};`;
+async function vote(connection, userId, grade, voteData, year, month, edit) {
+  const VALUES = voteData
+    .entries()
+    .map(([day, sport]) => {
+      return `(${userId}, ${year}, ${month}, ${grade}, ${day}, '${sport}')`;
+    })
+    .join(",");
+  const Query = edit
+    ? `
+    UPDATE Voting SET status='deleted' WHERE userId = ? and year = ? and month = ? and grade = ?;
+  `
+    : "" +
+      `INSERT INTO Vote(userId, year, month, grade, day, sport) VALUES ${VALUES};`;
   const [result] = await connection.query(Query);
   return result;
 }
@@ -63,13 +66,15 @@ async function voteChange(connection, params) {
 }
 
 async function doubleCheckVote(connection, params) {
-  const Query = `SELECT id from Vote WHERE userID = ? and date = ? and status='activate'`;
+  const Query = `SELECT id from Vote WHERE userID = ? and year = ? and month = ? and status='activate'`;
   const [result] = await connection.query(Query, params);
   return result;
 }
 
 async function voteResult(connection, params) {
-  const Query = `SELECT sports, date, sum (totalPoint) as point FROM Vote WHERE grade = ? and date >= ? and date <= ? and status="activate" group by sports, date`;
+  const Query = `
+  SELECT day, sport, count(sport) FROM Voting WHERE grade = ? and year = ? and month = ? and status='activate' GROUP BY day, sport;
+`;
   const [result] = await connection.query(Query, params);
   return [result];
 }

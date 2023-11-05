@@ -6,6 +6,7 @@ module.exports = {
     code: 1001,
     message: "Fail.",
   },
+
   WRONG_EMAIL: {
     isSuccess: false,
     code: 1002,
@@ -48,6 +49,12 @@ module.exports = {
     message: "Check the email and password again.",
   },
 
+  NOT_EXIST_USER_FOR_SENDING_EMAIL: {
+    isSuccess: false,
+    code: 3002,
+    message: "This email is not registered.",
+  },
+
   TOKEN_ERROR: { isSuccess: false, code: 4001, message: "잘못된 토큰입니다." },
 
   ALREADY_EXIST_VOTE: {
@@ -61,10 +68,23 @@ module.exports = {
     code: 6001,
     message: "Date is wrong.",
   },
+
   VOTE_NOT_END: {
     isSuccess: false,
     code: 6002,
     message: "The vote has not finished yet.",
+  },
+
+  CLOSED_VOTE: {
+    isSuccess: false,
+    code: 6003,
+    message: "The vote has not finished yet.",
+  },
+
+  INVALID_VOTE_DATA: {
+    isSuccess: false,
+    code: 6004,
+    message: "Invalid vote data.",
   },
 
   EMAILEMPTY: {

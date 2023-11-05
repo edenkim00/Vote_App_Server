@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const Provider = require("../app/Provider");
 const Service = require("../app/Service");
 const baseResponse = require("../../config/baseResponseStatus");
@@ -11,18 +12,24 @@ const moment = require("moment");
 const fs = require("fs");
 const path = require("path");
 const csvFilePath = path.join("/tmp", "data.csv");
-const { getGrade, getWeekDateRange, getWeekDateList } = require("./utils");
+const {
+  getGrade,
+  getWeekDateList,
+  isValidVoteData,
+  isValidDateForVoteResult,
+} = require("./utils");
 require("dotenv").config();
 
-exports.postUser = async function (data, verifiedToken) {
-  const { email, password, name, graduationYear, votingWeight } = data;
+exports.postUser = async function (data) {
+  const { email, password, name, graduationYear, sex } = data;
 
   // 1001 : Empty Body
   if (
     email == null ||
     password == null ||
     name == null ||
-    graduationYear == null
+    graduationYear == null ||
+    sex == null
   ) {
     return errResponse(baseResponse.WRONG_BODY);
   }
@@ -49,19 +56,12 @@ exports.postUser = async function (data, verifiedToken) {
     hmacSHA512(password, process.env.PASSWORD_HASHING_NAMESPACE)
   );
 
-  const queryParams = [
-    email,
-    encodedPassword,
-    name,
-    graduationYear,
-    votingWeight,
-  ];
+  const queryParams = [email, encodedPassword, name, graduationYear, sex];
   await Service.postUser(queryParams);
   return response(baseResponse.SUCCESS);
 };
 
-
-exports.changePassword = async function (data, verifiedToken) {
+exports.changePassword = async function (data) {
   const { email, newPassword } = data;
 
   // 1001 : body에 빈값있음.
@@ -79,11 +79,11 @@ exports.changePassword = async function (data, verifiedToken) {
     hmacSHA512(newPassword, process.env.PASSWORD_HASHING_NAMESPACE)
   );
 
-  const result = await Service.changePassword([encoedPassword, email]);
+  await Service.changePassword([encoedPassword, email]);
   return response(baseResponse.SUCCESS);
 };
 
-exports.signIn = async function (data, verifiedToken) {
+exports.signIn = async function (data) {
   const { email, password } = data;
 
   // 1001 : 바디에 빈 값이 있음.
@@ -125,7 +125,7 @@ exports.signIn = async function (data, verifiedToken) {
   return response(baseResponse.SUCCESS, result);
 };
 
-exports.mypageInfo = async function (data, verifiedToken) {
+exports.mypageInfo = async function (_, verifiedToken) {
   const userId = verifiedToken.userId;
   // 4001
   if (!userId) {
@@ -133,13 +133,14 @@ exports.mypageInfo = async function (data, verifiedToken) {
   }
 
   const userInfo = await Provider.getUserInfo(userId);
-  const { name, graduationYear, votingWeight } = userInfo[0];
+  const { name, graduationYear, sex } = userInfo[0];
 
   const grade = getGrade(graduationYear);
   const result = {
-    name: name,
-    grade: grade,
-    votingWeight: votingWeight,
+    userId,
+    name,
+    grade,
+    sex,
   };
   return response(baseResponse.SUCCESS, result);
 };
@@ -150,135 +151,26 @@ exports.vote = async function (data, verifiedToken) {
   if (userId == null) {
     return errResponse(baseResponse.TOKEN_ERROR);
   }
-  const { voteData, votingWeight, year, month, week, graduationYear } = data;
+  const { voteData, year, month, graduationYear, edit } = data;
   // 1001
-  if (
-    !(
-      userId &&
-      voteData &&
-      votingWeight &&
-      year &&
-      month &&
-      week &&
-      graduationYear
-    )
-  ) {
+  if (!(userId && voteData && year && month && graduationYear)) {
     return errResponse(baseResponse.WRONG_BODY);
   }
-
-  // validate date
-  const voteStartAndEndDate = getWeekDateRange(year, month, week);
-  // year 2023, month 05, week 4 -> startDate: 2023-05-22, endDate: 2023-05-31
-  const dateList = Object.keys(voteData);
-  for (const [date, vote] of Object.entries(voteData)) {
-    if (
-      date < voteStartAndEndDate.startDate ||
-      date > voteStartAndEndDate.endDate
-    ) {
-      // 8001
-      return errResponse(baseResponse.WRONG_VOTE_DATA);
-    }
-    if (!["1", "2", "3"].every((e) => Object.keys(vote).includes(e))) {
-      // 8001
-      return errResponse(baseResponse.WRONG_VOTE_DATA);
-    }
-  }
-
-  const today = new Date();
-  const todayDay = parseInt(today.getDate());
-  const todayWeek = String(Math.min(parseInt((todayDay - 1) / 7) + 1, 4));
-  const todayMonth = String(today.getMonth() + 1);
-  const todayYear = String(today.getFullYear());
-  if (year <= todayYear) {
-    if (year < todayYear) {
-      // 8001
-      return errResponse(baseResponse.WRONG_VOTE_DATE);
-    }
-    if (month <= todayMonth) {
-      // 8001
-      return errResponse(baseResponse.WRONG_VOTE_DATE);
-    }
-    if (parseInt(month) == parseInt(todayMonth) + 1 && week <= todayWeek) {
-      // 8001
-      return errResponse(baseResponse.WRONG_VOTE_DATE);
-    }
+  if (!isValidVoteData(year, month, voteData)) {
+    return errResponse(baseResponse.INVALID_VOTE_DATA);
   }
 
   const doubleCheckResult = await Provider.doubleCheckVote([
     userId,
-    dateList[0],
+    year,
+    month,
   ]);
   if (doubleCheckResult.length > 0) {
     return errResponse(baseResponse.ALREADY_EXIST_VOTE);
   }
 
   const grade = getGrade(parseInt(graduationYear)); // HS or MS
-  const params = [userId, grade, voteData, votingWeight, year, month, week];
-  const result = await Service.vote(params);
-  if (!result) {
-    return errResponse(baseResponse.WRONG_VOTE_DATA);
-  }
-  return response(baseResponse.SUCCESS);
-};
-
-exports.voteChange = async function (data, verifiedToken) {
-  const userId = verifiedToken.userId;
-  // 4001
-  if (userId == null) {
-    return errResponse(baseResponse.TOKEN_ERROR);
-  }
-
-  const { voteData, votingWeight, year, month, week, graduationYear } = data;
-
-  // 1001
-  if (!(voteData && votingWeight && year && month && week && graduationYear)) {
-    return errResponse(baseResponse.WRONG_BODY);
-  }
-  // validate date
-  const voteStartAndEndDate = getWeekDateRange(year, month, week);
-  // year 2023, month 05, week 4 -> startDate: 2023-05-22, endDate: 2023-05-31
-  for (const [date, vote] of Object.entries(voteData)) {
-    if (
-      date < voteStartAndEndDate.startDate ||
-      date > voteStartAndEndDate.endDate
-    ) {
-      // 8001
-      return errResponse(baseResponse.WRONG_VOTE_DATA);
-    }
-    if (!["1", "2", "3"].every((e) => Object.keys(vote).includes(e))) {
-      // 8001
-      return errResponse(baseResponse.WRONG_VOTE_DATA);
-    }
-  }
-
-  const today = new Date();
-  const todayDay = parseInt(today.getDate());
-  const todayWeek = Math.min(parseInt((todayDay - 1) / 7) + 1, 4);
-  const todayMonth = parseInt(today.getMonth()) + 1;
-  const todayYear = parseInt(today.getFullYear());
-  if (year <= todayYear) {
-    if (year < todayYear) {
-      // 8001
-      return errResponse(baseResponse.WRONG_VOTE_DATE);
-    }
-    if (month <= todayMonth) {
-      // 8001
-      return errResponse(baseResponse.WRONG_VOTE_DATE);
-    }
-    if (month == todayMonth + 1 && week <= todayWeek) {
-      // 8001
-      return errResponse(baseResponse.WRONG_VOTE_DATE);
-    }
-  }
-
-  const grade = getGrade(parseInt(graduationYear)); // HS or MS
-  const params = [userId, grade, voteData, votingWeight, year, month, week];
-
-  const deleteResult = await Service.voteDelete(userId, year, month, week);
-  if (!deleteResult) {
-    return errResponse(baseResponse.WRONG_VOTE_DATA);
-  }
-  const result = await Service.vote(params);
+  const result = await Service.vote(userId, grade, voteData, year, month, edit);
   if (!result) {
     return errResponse(baseResponse.WRONG_VOTE_DATA);
   }
@@ -291,45 +183,34 @@ exports.voteResult = async function (data, verifiedToken) {
   if (userId == null) {
     return errResponse(baseResponse.TOKEN_ERROR);
   }
-  const { grade, year, month, week } = data;
+  const { grade, year, month } = data;
   // 2001
-  if (!(grade && year && month && week)) {
+  if (!(grade && year && month)) {
     return errResponse(baseResponse.WRONG_QUERY_STRING);
   }
-  const today = new Date();
-  const todayDay = parseInt(today.getDate());
-  const todayWeek = Math.min(parseInt((todayDay - 1) / 7) + 1, 4);
-  const todayMonth = parseInt(today.getMonth()) + 1;
-  const todayYear = parseInt(today.getFullYear());
-  // 6001
-  if (year > todayYear + 1) {
-    return errResponse(baseResponse.DATE_ERROR);
-  }
+
   // 6002
-  if (year == todayYear + 1) {
-    if (month != 1 || todayMonth != 12 || week > todayWeek) {
-      return errResponse(baseResponse.VOTE_NOT_END);
-    }
-  }
-  if (year == todayYear && month > todayMonth && week > todayWeek) {
+  if (!isValidDateForVoteResult(year, month)) {
     return errResponse(baseResponse.VOTE_NOT_END);
   }
 
-  const dateInfo = getWeekDateRange(year, month, week);
-  const result = await Provider.voteResult([
-    grade,
-    dateInfo.startDate,
-    dateInfo.endDate,
-  ]);
+  const result = await Provider.voteResult(grade, year, month);
   if (!result) {
     return errResponse(baseResponse.WRONG_VOTE_DATA);
   }
   return response(baseResponse.SUCCESS, result);
 };
 
-exports.sendEmail = async function (data, verifiedToken) {
-  const email = data.email;
-  let authNum = Math.random().toString().substr(2, 6);
+exports.sendEmail = async function (data) {
+  const { email, shouldExist } = data;
+  if (shouldExist) {
+    const doubleCheck = await Provider.getUserEmail(email);
+    if (doubleCheck.length == 0) {
+      return errResponse(baseResponse.NOT_EXIST_USER_FOR_SENDING_EMAIL);
+    }
+  }
+
+  let authNum = Math.random().toString().substring(2, 8);
   // 7001
   if (email == null || email == "") return response(baseResponse.EMAILEMPTY);
   const mailPoster = nodemailer.createTransport(
@@ -337,6 +218,7 @@ exports.sendEmail = async function (data, verifiedToken) {
       service: "gmail",
       auth: {
         user: "nlcsjejusportshall@gmail.com",
+        // eslint-disable-next-line no-undef
         pass: process.env.EMAIL_AUTH_PASSWORD,
       },
     })
@@ -348,11 +230,11 @@ exports.sendEmail = async function (data, verifiedToken) {
     subject: "[NLCS-JEJU-Sportshall] 이메일 인증번호를 안내해드립니다.",
     text: "인증번호는 " + authNum + " 입니다.",
   };
-  return new Promise((resolve, reject) => {
-    mailPoster.sendMail(mailOptions, function (error, info) {
+  return new Promise((resolve) => {
+    mailPoster.sendMail(mailOptions, function (error) {
       if (error) {
         //7002
-        console.error("[Send Email]: ", err);
+        console.error("[Send Email]: ", error);
         return resolve(errResponse(baseResponse.EMAIL_SEND_ERROR));
       } else {
         resolve(response(baseResponse.SUCCESS, { code: authNum }));
@@ -375,7 +257,6 @@ exports.sendingEmailResult = async function (data, verifiedToken) {
   const endDate = moment(`${year}-${paddedMonth}`).endOf("month");
   const dateList = getWeekDateList(startDate, endDate);
 
-  const header = ["basketball", "volleyball", "badminton"];
   const csvDataMS = Object.fromEntries(
     dateList.map((date) => [
       date,
@@ -462,7 +343,7 @@ exports.sendingEmailResult = async function (data, verifiedToken) {
       },
     ],
   };
-  const promise = new Promise((resolve, reject) => {
+  const promise = new Promise((resolve) => {
     transporter.sendMail(mailOptions, function (error, info) {
       if (error) {
         console.log(error);

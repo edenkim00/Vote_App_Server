@@ -1,5 +1,6 @@
 const { pool } = require("../../config/database");
 const Dao = require("./Dao");
+const { processVoteResult } = require("./utils");
 
 async function select(f, params) {
   try {
@@ -16,7 +17,6 @@ async function select(f, params) {
 exports.getUserEmail = async function (email) {
   return await select(Dao.getUserByEmail, email);
 };
-
 
 exports.isUserExist = async function (params) {
   return await select(Dao.isUserExist, params);
@@ -38,30 +38,10 @@ exports.getAdminResult = async function (params) {
   return await select(Dao.getAdminResult, params);
 };
 
-exports.voteResult = async function (params) {
+exports.voteResult = async function (grade, year, month) {
   try {
-    const result = await select(Dao.voteResult, params);
-    if (!(result && result.length)) {
-      return null;
-    }
-    let votingResult = {};
-    for (const item of result[0]) {
-      const dateString = item.date.toISOString().split("T")[0];
-      if (votingResult[dateString]) {
-        if (parseInt(votingResult[dateString].point) < parseInt(item.point)) {
-          votingResult[dateString] = {
-            point: item.point,
-            sports: item.sports,
-          };
-        }
-      } else {
-        votingResult[dateString] = {
-          point: item.point,
-          sports: item.sports,
-        };
-      }
-    }
-    return votingResult;
+    const result = await select(Dao.voteResult, [grade, year, month]);
+    return processVoteResult(result);
   } catch (err) {
     console.error("[VoteResult]", err);
   }

@@ -1,11 +1,14 @@
+/* eslint-disable no-undef */
 const jwt = require("jsonwebtoken");
 const { ENDPOINT_METADATA } = require("./metadata");
 function parseEvent(event) {
   try {
     const body = event?.body ? JSON.parse(event.body) : {};
     const queryString = event.queryStringParameters || {};
-    const { method: requestMethod, path } = event?.requestContext?.http;
-    const { method, tokenRequired, next } = ENDPOINT_METADATA[path];
+    const requestData = event?.requestContext?.http;
+    if (!requestData) return null;
+    const { method: requestMethod, path } = requestData;
+    const { method, tokenRequired, next, extraData } = ENDPOINT_METADATA[path];
 
     if (!(path && requestMethod)) return null;
     if (!(method && next)) return null;
@@ -23,6 +26,7 @@ function parseEvent(event) {
       data: {
         ...body,
         ...queryString,
+        ...(extraData ?? {}),
       },
     };
   } catch (err) {
