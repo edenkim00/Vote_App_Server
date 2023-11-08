@@ -125,7 +125,7 @@ exports.signIn = async function (data) {
   return response(baseResponse.SUCCESS, result);
 };
 
-exports.mypageInfo = async function (_, verifiedToken) {
+exports.userInfo = async function (_, verifiedToken) {
   const userId = verifiedToken.userId;
   // 4001
   if (!userId) {
@@ -374,3 +374,4 @@ function getMaxSports(basketball, volleyball, badminton) {
   }
   return "Badminton";
 }
+ 

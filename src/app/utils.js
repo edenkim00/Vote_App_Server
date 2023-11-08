@@ -1,16 +1,16 @@
 const moment = require("moment");
 const DAYS_AVAILABLE = [
-  "MON",
-  "TUE",
-  "WED",
-  "THU",
-  "FRI1",
-  "FRI2",
-  "SAT1",
-  "SAT2",
+  "Mon",
+  "Tue",
+  "Wed",
+  "Thu",
+  "Fri1",
+  "Fri2",
+  "Sat1",
+  "Sat2",
 ];
 
-const SPORTS_AVAILABLE = ["BASKETBALL", "BADMINTON", "VOLLEYBALL", "NONE"];
+const SPORTS_AVAILABLE = ["Basketball", "Badminton", "Volleyball", "None"];
 function getWeekDateRange(year, month, week) {
   const paddedMonth = month.padStart(2, "0"); // 3 -> 03, 12 -> 12
   let startDate, endDate;
@@ -54,22 +54,28 @@ function getGrade(graduationYear) {
 
 function isValidVoteData(year, month, voteData) {
   const today = new Date();
-  const todayYear = parseInt(today.getFullYear());
-  const todayMonth = parseInt(today.getMonth()) + 1;
+
+  const aWeekLater = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate() + 7
+  );
+  const cutOffYear = parseInt(aWeekLater.getFullYear());
+  const cutoffMonth = parseInt(aWeekLater.getMonth()) + 1;
   // 6001
-  if (!(todayYear <= year && year <= todayYear + 1)) {
+  if (!(cutOffYear <= year && year <= cutOffYear + 1)) {
     return false;
   }
 
   // 6002
-  if (year == todayYear + 1) {
-    if (!(month == 1 && todayMonth == 12)) {
+  if (year == cutOffYear + 1) {
+    if (!(month == 1 && cutoffMonth == 12)) {
       return false;
     }
   }
 
   // 6003
-  if (month <= todayMonth) {
+  if (month <= cutoffMonth) {
     return false;
   }
 
@@ -78,8 +84,11 @@ function isValidVoteData(year, month, voteData) {
     voteData
       .entries()
       .map(
-        ([day, sport]) =>
-          DAYS_AVAILABLE.includes(day) && SPORTS_AVAILABLE.includes(sport)
+        ([day, sports]) =>
+          DAYS_AVAILABLE.includes(day) &&
+          sports?.length === 2 &&
+          SPORTS_AVAILABLE.includes(sports[0]) &&
+          SPORTS_AVAILABLE.includes(sports[1])
       )
       .some((x) => !x)
   ) {

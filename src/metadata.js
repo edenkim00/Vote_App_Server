@@ -38,10 +38,10 @@ const ENDPOINT_METADATA = {
       edit: true,
     },
   },
-  "/app/mypage-info": {
+  "/app/user-info": {
     method: "GET",
     tokenRequired: true,
-    next: Controller.mypageInfo,
+    next: Controller.userInfo,
   },
   "/app/report-vote-result": {
     method: "POST",

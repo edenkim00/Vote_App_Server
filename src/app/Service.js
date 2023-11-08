@@ -29,7 +29,24 @@ exports.changePassword = async function (params) {
 exports.vote = async function (userId, grade, voteData, year, month, edit) {
   try {
     const connection = await pool.getConnection(async (conn) => conn);
-    await Dao.vote(connection, userId, grade, voteData, year, month, edit);
+
+    const promises = [];
+    for (const priority of [1, 2]) {
+      promises.push(
+        Dao.vote(
+          connection,
+          userId,
+          grade,
+          _filterVoteDataWithPriority(voteData, priority),
+          year,
+          month,
+          priority,
+          edit
+        )
+      );
+    }
+    await Promise.all(promises);
+
     connection.release();
     return true;
   } catch (err) {
@@ -37,3 +54,9 @@ exports.vote = async function (userId, grade, voteData, year, month, edit) {
   }
   return false;
 };
+
+function _filterVoteDataWithPriority(voteData, priority) {
+  return Object.fromEntries(
+    voteData.entries().map(([day, sports]) => [day, sports[priority]])
+  );
+}

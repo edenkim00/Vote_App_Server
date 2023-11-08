@@ -42,19 +42,28 @@ async function getGradeYearUser(connection, userId) {
   return result;
 }
 
-async function vote(connection, userId, grade, voteData, year, month, edit) {
+async function vote(
+  connection,
+  userId,
+  grade,
+  voteData,
+  year,
+  month,
+  priority,
+  edit
+) {
   const VALUES = voteData
     .entries()
     .map(([day, sport]) => {
-      return `(${userId}, ${year}, ${month}, ${grade}, ${day}, '${sport}')`;
+      return `(${userId}, ${year}, ${month}, ${grade}, ${day}, '${sport}', ${priority})`;
     })
     .join(",");
   const Query = edit
     ? `
-    UPDATE Voting SET status='deleted' WHERE userId = ? and year = ? and month = ? and grade = ?;
+    UPDATE Voting SET status='deleted' WHERE userId = ${userId} and year = ${year} and month = ${month} and grade = ${grade} and priority = ${priority} and status='activate';
   `
     : "" +
-      `INSERT INTO Vote(userId, year, month, grade, day, sport) VALUES ${VALUES};`;
+      `INSERT INTO Vote(userId, year, month, grade, day, sport, priority) VALUES ${VALUES};`;
   const [result] = await connection.query(Query);
   return result;
 }
