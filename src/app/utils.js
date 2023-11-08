@@ -11,6 +11,8 @@ const DAYS_AVAILABLE = [
 ];
 
 const SPORTS_AVAILABLE = ["Basketball", "Badminton", "Volleyball", "None"];
+const WEIGHTS_FOR_VOTE_BY_PRIORITY = [3, 2];
+
 function getWeekDateRange(year, month, week) {
   const paddedMonth = month.padStart(2, "0"); // 3 -> 03, 12 -> 12
   let startDate, endDate;
@@ -119,8 +121,12 @@ function processVoteResult(voteResults) {
     ])
   );
   for (const voteResult of voteResults) {
-    const { day, sport, count } = voteResult;
-    voteData[day][sport] = count;
+    const { day, sport, count, priority } = voteResult;
+    if (!(day && sport && count && priority)) {
+      console.error("Invalid vote result", voteResults);
+      continue;
+    }
+    voteData[day][sport] = count * WEIGHTS_FOR_VOTE_BY_PRIORITY[priority];
   }
 
   return voteData;

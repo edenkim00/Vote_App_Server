@@ -82,7 +82,7 @@ async function doubleCheckVote(connection, params) {
 
 async function voteResult(connection, params) {
   const Query = `
-  SELECT day, sport, count(sport) FROM Voting WHERE grade = ? and year = ? and month = ? and status='activate' GROUP BY day, sport;
+  SELECT day, sport, priority, count(sport) FROM Voting WHERE grade = ? and year = ? and month = ? and status='activate' GROUP BY day, sport, priority;
 `;
   const [result] = await connection.query(Query, params);
   return [result];
