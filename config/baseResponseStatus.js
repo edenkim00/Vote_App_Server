@@ -109,4 +109,10 @@ module.exports = {
     code: 8002,
     message: "Wrong vote date.",
   },
+
+  NOT_CONFIRMED_BY_ADMIN: {
+    isSuccess: false,
+    code: 8003,
+    message: "Not confirmed by admin.",
+  },
 };

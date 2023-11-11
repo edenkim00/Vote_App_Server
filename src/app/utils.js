@@ -10,7 +10,13 @@ const DAYS_AVAILABLE = [
   "Sat2",
 ];
 
-const SPORTS_AVAILABLE = ["Basketball", "Badminton", "Volleyball", "None"];
+const SPORTS_AVAILABLE = [
+  "Basketball",
+  "Badminton",
+  "Volleyball",
+  "Netball",
+  "None",
+];
 const WEIGHTS_FOR_VOTE_BY_PRIORITY = [3, 2];
 
 function getWeekDateRange(year, month, week) {
@@ -54,7 +60,7 @@ function getGrade(graduationYear) {
   return diff > 9 ? "HS" : "MS";
 }
 
-function isValidVoteData(year, month, voteData) {
+function isValidVoteData(year, month, voteData, isAdmin) {
   const today = new Date();
 
   const aWeekLater = new Date(
@@ -62,35 +68,35 @@ function isValidVoteData(year, month, voteData) {
     today.getMonth(),
     today.getDate() + 7
   );
-  const cutOffYear = parseInt(aWeekLater.getFullYear());
-  const cutoffMonth = parseInt(aWeekLater.getMonth()) + 1;
-  // 6001
-  if (!(cutOffYear <= year && year <= cutOffYear + 1)) {
-    return false;
-  }
+  if (!isAdmin) {
+    const cutOffYear = parseInt(aWeekLater.getFullYear());
+    const cutoffMonth = parseInt(aWeekLater.getMonth()) + 1;
+    // 6001
+    if (!(cutOffYear <= year && year <= cutOffYear + 1)) {
+      return false;
+    }
 
-  // 6002
-  if (year == cutOffYear + 1) {
-    if (!(month == 1 && cutoffMonth == 12)) {
+    // 6002
+    if (year == cutOffYear + 1) {
+      if (!(month == 1 && cutoffMonth == 12)) {
+        return false;
+      }
+    }
+
+    // 6003
+    if (month <= cutoffMonth) {
       return false;
     }
   }
-
-  // 6003
-  if (month <= cutoffMonth) {
-    return false;
-  }
-
   if (
     !voteData ||
-    voteData
-      .entries()
+    Object.entries(voteData)
       .map(
         ([day, sports]) =>
           DAYS_AVAILABLE.includes(day) &&
-          sports?.length === 2 &&
+          sports?.length === 2 - (isAdmin ? 1 : 0) &&
           SPORTS_AVAILABLE.includes(sports[0]) &&
-          SPORTS_AVAILABLE.includes(sports[1])
+          (isAdmin ? true : SPORTS_AVAILABLE.includes(sports[1]))
       )
       .some((x) => !x)
   ) {
@@ -111,25 +117,38 @@ function isValidDateForVoteResult(year, month) {
       return false;
     }
   }
+  return true;
 }
 
 function processVoteResult(voteResults) {
   const voteData = Object.fromEntries(
     DAYS_AVAILABLE.map((d) => [
       d,
-      Object.entries(SPORTS_AVAILABLE.map((s) => [s, 0])),
+      Object.fromEntries(SPORTS_AVAILABLE.map((s) => [s, 0])),
     ])
   );
-  for (const voteResult of voteResults) {
-    const { day, sport, count, priority } = voteResult;
-    if (!(day && sport && count && priority)) {
-      console.error("Invalid vote result", voteResults);
+  if (!voteResults || !voteResults[0]) {
+    return voteData;
+  }
+  for (const voteResult of voteResults[0]) {
+    const { day, sport, vote_counts, priority } = voteResult;
+    if (!(day && sport && vote_counts && priority)) {
+      console.error("Invalid vote result", voteResults[0]);
       continue;
     }
-    voteData[day][sport] = count * WEIGHTS_FOR_VOTE_BY_PRIORITY[priority];
+    voteData[day][sport] +=
+      parseInt(vote_counts) * WEIGHTS_FOR_VOTE_BY_PRIORITY[priority - 1];
   }
 
-  return voteData;
+  return Object.fromEntries(
+    Object.entries(voteData).map(([day, data]) => [day, getOrderedResult(data)])
+  );
+}
+
+function getOrderedResult(result) {
+  const entries = Object.entries(result);
+  entries.sort((a, b) => b[1] - a[1]);
+  return Object.fromEntries(entries.map((e, i) => [i + 1, e[0]]));
 }
 
 module.exports = {
@@ -139,4 +158,5 @@ module.exports = {
   isValidVoteData,
   isValidDateForVoteResult,
   processVoteResult,
+  DAYS_AVAILABLE,
 };

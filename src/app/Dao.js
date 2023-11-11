@@ -50,39 +50,33 @@ async function vote(
   year,
   month,
   priority,
-  edit
+  edit,
+  isAdmin
 ) {
-  const VALUES = voteData
-    .entries()
+  const VALUES = Object.entries(voteData)
     .map(([day, sport]) => {
-      return `(${userId}, ${year}, ${month}, ${grade}, ${day}, '${sport}', ${priority})`;
+      return `(${userId}, ${year}, ${month}, ${priority}, '${grade}', '${day}', '${sport}', ${isAdmin})`;
     })
     .join(",");
-  const Query = edit
-    ? `
-    UPDATE Voting SET status='deleted' WHERE userId = ${userId} and year = ${year} and month = ${month} and grade = ${grade} and priority = ${priority} and status='activate';
-  `
-    : "" +
-      `INSERT INTO Vote(userId, year, month, grade, day, sport, priority) VALUES ${VALUES};`;
+  if (edit) {
+    await connection.query(
+      `UPDATE Voting SET status='deleted' WHERE user_id = ${userId} and year = ${year} and month = ${month} and grade = '${grade}' and priority = ${priority} and is_admin = ${isAdmin} and status='activate';`
+    );
+  }
+  const Query = `INSERT INTO Voting(user_id, year, month, priority, grade, day, sport, is_admin) VALUES ${VALUES};`;
   const [result] = await connection.query(Query);
   return result;
 }
 
-async function voteChange(connection, params) {
-  const Query = `Update Vote SET sports = ? where userId = ? and date = ? and grade = ?;`;
-  const [result] = await connection.query(Query, params);
-  return result;
-}
-
 async function doubleCheckVote(connection, params) {
-  const Query = `SELECT id from Vote WHERE userID = ? and year = ? and month = ? and status='activate'`;
+  const Query = `SELECT id from Voting WHERE user_id = ? and year = ? and month = ? and status='activate'`;
   const [result] = await connection.query(Query, params);
   return result;
 }
 
 async function voteResult(connection, params) {
   const Query = `
-  SELECT day, sport, priority, count(sport) FROM Voting WHERE grade = ? and year = ? and month = ? and status='activate' GROUP BY day, sport, priority;
+  SELECT day, sport, priority, count(sport) AS vote_counts FROM Voting WHERE grade = ? and year = ? and month = ? and status='activate' GROUP BY day, sport, priority;
 `;
   const [result] = await connection.query(Query, params);
   return [result];
@@ -100,6 +94,12 @@ async function getAdminResult(connection, params) {
   return result;
 }
 
+async function getAdminVotingResult(connection, params) {
+  const Query = `SELECT * FROM Voting WHERE year = ? and month = ? and grade = ? and priority=1 and status='activate'`;
+  const [result] = await connection.query(Query, params);
+  return result;
+}
+
 module.exports = {
   getUserByEmail,
   postUser,
@@ -111,7 +111,7 @@ module.exports = {
   vote,
   doubleCheckVote,
   voteResult,
-  voteChange,
   voteDelete,
   getAdminResult,
+  getAdminVotingResult,
 };

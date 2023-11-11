@@ -33,7 +33,7 @@ const ENDPOINT_METADATA = {
   "/app/vote-change": {
     method: "PATCH",
     tokenRequired: true,
-    next: Controller.voteChange,
+    next: Controller.vote,
     extraData: {
       edit: true,
     },

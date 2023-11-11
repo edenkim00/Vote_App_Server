@@ -1,6 +1,6 @@
 const { pool } = require("../../config/database");
 const Dao = require("./Dao");
-const { processVoteResult } = require("./utils");
+const { DAYS_AVAILABLE } = require("./utils");
 
 async function select(f, params) {
   try {
@@ -39,10 +39,41 @@ exports.getAdminResult = async function (params) {
 };
 
 exports.voteResult = async function (grade, year, month) {
-  try {
-    const result = await select(Dao.voteResult, [grade, year, month]);
-    return processVoteResult(result);
-  } catch (err) {
-    console.error("[VoteResult]", err);
-  }
+  const adminResult = await getAdminVoteResult(year, month, grade);
+  return adminResult ?? undefined;
 };
+
+// exports.voteResultForAdmin = async function (grade, year, month) {
+//   try {
+//     const result = await select(Dao.voteResult, [grade, year, month]);
+//     return processVoteResult(result);
+//   } catch (err) {
+//     console.error(err);
+//     return undefined;
+//   }
+// };
+
+async function getAdminVoteResult(year, month, grade) {
+  try {
+    const result = await select(Dao.getAdminVotingResult, [year, month, grade]);
+    console.log(result);
+    console.log(result[0]);
+    for (const day of DAYS_AVAILABLE) {
+      if (!result.filter((r) => r.day === day).length) {
+        return undefined;
+      }
+    }
+    console.log("HERE");
+    return Object.fromEntries(
+      DAYS_AVAILABLE.map((d) => {
+        return [
+          d,
+          { 1: result.filter((r) => r.day === d)[0]?.["sport"], 2: "None" },
+        ];
+      })
+    );
+  } catch (err) {
+    console.error("[getAdminVoteResult]", err);
+    return null;
+  }
+}

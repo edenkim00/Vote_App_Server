@@ -9,7 +9,7 @@ function parseEvent(event) {
     if (!requestData) return null;
     const { method: requestMethod, path } = requestData;
     const { method, tokenRequired, next, extraData } = ENDPOINT_METADATA[path];
-
+    console.log(path, requestMethod, method, next);
     if (!(path && requestMethod)) return null;
     if (!(method && next)) return null;
     if (method !== requestMethod) return null;

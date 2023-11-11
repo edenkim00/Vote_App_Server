@@ -140,6 +140,7 @@ exports.userInfo = async function (_, verifiedToken) {
     userId,
     name,
     grade,
+    graduationYear,
     sex,
   };
   return response(baseResponse.SUCCESS, result);
@@ -151,26 +152,45 @@ exports.vote = async function (data, verifiedToken) {
   if (userId == null) {
     return errResponse(baseResponse.TOKEN_ERROR);
   }
-  const { voteData, year, month, graduationYear, edit } = data;
+
+  const isAdmin = userId === 1;
+  const { voteData, year, month, graduationYear, edit, gradeSelectedByAdmin } =
+    data;
   // 1001
   if (!(userId && voteData && year && month && graduationYear)) {
     return errResponse(baseResponse.WRONG_BODY);
   }
-  if (!isValidVoteData(year, month, voteData)) {
+  if (isAdmin && !gradeSelectedByAdmin) {
+    return errResponse(baseResponse.WRONG_BODY);
+  }
+  if (!isValidVoteData(year, month, voteData, isAdmin)) {
     return errResponse(baseResponse.INVALID_VOTE_DATA);
   }
 
-  const doubleCheckResult = await Provider.doubleCheckVote([
-    userId,
-    year,
-    month,
-  ]);
-  if (doubleCheckResult.length > 0) {
-    return errResponse(baseResponse.ALREADY_EXIST_VOTE);
+  if (!edit) {
+    const doubleCheckResult = await Provider.doubleCheckVote([
+      userId,
+      year,
+      month,
+    ]);
+    if (doubleCheckResult.length > 0) {
+      return errResponse(baseResponse.ALREADY_EXIST_VOTE);
+    }
   }
 
-  const grade = getGrade(parseInt(graduationYear)); // HS or MS
-  const result = await Service.vote(userId, grade, voteData, year, month, edit);
+  const grade = isAdmin
+    ? gradeSelectedByAdmin
+    : getGrade(parseInt(graduationYear)); // HS or MS
+
+  const result = await Service.vote(
+    userId,
+    grade,
+    voteData,
+    year,
+    month,
+    edit,
+    isAdmin
+  );
   if (!result) {
     return errResponse(baseResponse.WRONG_VOTE_DATA);
   }
@@ -193,12 +213,15 @@ exports.voteResult = async function (data, verifiedToken) {
   if (!isValidDateForVoteResult(year, month)) {
     return errResponse(baseResponse.VOTE_NOT_END);
   }
-
-  const result = await Provider.voteResult(grade, year, month);
-  if (!result) {
+  try {
+    const result = await Provider.voteResult(grade, year, month);
+    if (!result) {
+      return errResponse(baseResponse.NOT_CONFIRMED_BY_ADMIN);
+    }
+    return response(baseResponse.SUCCESS, result);
+  } catch (err) {
     return errResponse(baseResponse.WRONG_VOTE_DATA);
   }
-  return response(baseResponse.SUCCESS, result);
 };
 
 exports.sendEmail = async function (data) {
@@ -374,4 +397,3 @@ function getMaxSports(basketball, volleyball, badminton) {
   }
   return "Badminton";
 }
- 
