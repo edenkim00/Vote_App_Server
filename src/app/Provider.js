@@ -1,6 +1,6 @@
 const { pool } = require("../../config/database");
 const Dao = require("./Dao");
-const { DAYS_AVAILABLE } = require("./utils");
+const { DAYS_AVAILABLE } = require("./utils/util");
 
 async function select(f, params) {
   try {
@@ -43,27 +43,15 @@ exports.voteResult = async function (grade, year, month) {
   return adminResult ?? undefined;
 };
 
-// exports.voteResultForAdmin = async function (grade, year, month) {
-//   try {
-//     const result = await select(Dao.voteResult, [grade, year, month]);
-//     return processVoteResult(result);
-//   } catch (err) {
-//     console.error(err);
-//     return undefined;
-//   }
-// };
-
 async function getAdminVoteResult(year, month, grade) {
   try {
     const result = await select(Dao.getAdminVotingResult, [year, month, grade]);
-    console.log(result);
-    console.log(result[0]);
+
     for (const day of DAYS_AVAILABLE) {
       if (!result.filter((r) => r.day === day).length) {
         return undefined;
       }
     }
-    console.log("HERE");
     return Object.fromEntries(
       DAYS_AVAILABLE.map((d) => {
         return [
@@ -77,3 +65,42 @@ async function getAdminVoteResult(year, month, grade) {
     return null;
   }
 }
+
+exports.prepareVoteDataForReport = async function (
+  tableInfo,
+  year,
+  month,
+  grade
+) {
+  try {
+    const connection = await pool.getConnection(async (conn) => conn);
+    const dataFromDB = await tableInfo.getDataFromDB(
+      connection,
+      year,
+      month,
+      grade
+    );
+    connection.release();
+
+    const data = Object.fromEntries(
+      tableInfo
+        .key(grade)
+        .map((k) => [
+          k,
+          Object.fromEntries(
+            tableInfo.columns.map((c) => [
+              c,
+              JSON.parse(JSON.stringify(tableInfo.initialValue)),
+            ])
+          ),
+        ])
+    );
+    for (const raw of dataFromDB) {
+      tableInfo.processRawData(raw, data);
+    }
+
+    return data;
+  } catch (err) {
+    console.error("[prepareVoteDataForReport]", err);
+  }
+};

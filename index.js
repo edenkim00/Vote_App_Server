@@ -3,6 +3,7 @@ const { parseEvent, verifyAccessToken } = require("./src/utils");
 require("dotenv").config();
 exports.handler = async function (event) {
   const parsedData = parseEvent(event);
+
   if (!parsedData) {
     return {
       statusCode: 400,

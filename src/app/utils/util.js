@@ -1,4 +1,3 @@
-const moment = require("moment");
 const DAYS_AVAILABLE = [
   "Mon",
   "Tue",
@@ -18,47 +17,6 @@ const SPORTS_AVAILABLE = [
   "None",
 ];
 const WEIGHTS_FOR_VOTE_BY_PRIORITY = [3, 2];
-
-function getWeekDateRange(year, month, week) {
-  const paddedMonth = month.padStart(2, "0"); // 3 -> 03, 12 -> 12
-  let startDate, endDate;
-  if (week == "4") {
-    startDate = moment(`${year}-${paddedMonth}`)
-      .startOf("month")
-      .add(week - 1, "week");
-    endDate = moment(`${year}-${paddedMonth}`).endOf("month");
-  } else {
-    startDate = moment(`${year}-${paddedMonth}`)
-      .startOf("month")
-      .add(week - 1, "week");
-    endDate = moment(`${year}-${paddedMonth}`)
-      .startOf("month")
-      .add(week, "week")
-      .subtract(1, "day");
-  }
-  return {
-    startDate: startDate.format("YYYY-MM-DD"),
-    endDate: endDate.format("YYYY-MM-DD"),
-    dateList: getWeekDateList(startDate, endDate),
-  };
-}
-
-function getWeekDateList(startDate, endDate) {
-  const dateList = [];
-  let currentDate = startDate;
-  while (currentDate <= endDate) {
-    dateList.push(currentDate.format("YYYY-MM-DD"));
-    currentDate = currentDate.clone().add(1, "d");
-  }
-  return dateList;
-}
-function getGrade(graduationYear) {
-  const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth() + 1;
-  const diff =
-    13 - (graduationYear - currentYear) + (currentMonth >= 8 ? 1 : 0);
-  return diff > 9 ? "HS" : "MS";
-}
 
 function isValidVoteData(year, month, voteData, isAdmin) {
   const today = new Date();
@@ -151,12 +109,32 @@ function getOrderedResult(result) {
   return Object.fromEntries(entries.map((e, i) => [i + 1, e[0]]));
 }
 
+function getFullGradeFromGraduationYear(graduationYear) {
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
+  return 13 - (graduationYear - currentYear) + (currentMonth >= 8 ? 1 : 0);
+}
+
+function getGrade(graduationYear) {
+  return getFullGradeFromGraduationYear(graduationYear) > 9 ? "HS" : "MS";
+}
+
+function getGrades(grade) {
+  if (grade === "HS") {
+    return [10, 11, 12, 13];
+  } else {
+    return [7, 8, 9];
+  }
+}
+
 module.exports = {
-  getWeekDateRange,
-  getWeekDateList,
   getGrade,
+  getGrades,
+  getFullGradeFromGraduationYear,
   isValidVoteData,
   isValidDateForVoteResult,
   processVoteResult,
+  WEIGHTS_FOR_VOTE_BY_PRIORITY,
   DAYS_AVAILABLE,
+  SPORTS_AVAILABLE,
 };

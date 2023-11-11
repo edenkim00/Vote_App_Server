@@ -78,3 +78,5 @@ function _filterVoteDataWithPriority(voteData, priority) {
     Object.entries(voteData).map(([day, sports]) => [day, sports[priority - 1]])
   );
 }
+
+
