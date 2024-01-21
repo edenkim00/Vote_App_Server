@@ -42,6 +42,12 @@ async function getGradeYearUser(connection, userId) {
   return result;
 }
 
+async function deleteAccount(connection, params) {
+  const Query = `UPDATE User SET status = 'deleted' WHERE id = ?;`;
+  await connection.query(Query, params);
+  return;
+}
+
 async function vote(
   connection,
   userId,
@@ -137,4 +143,5 @@ module.exports = {
   getAdminVotingResult,
   getReportData,
   getReportDetailData,
+  deleteAccount,
 };

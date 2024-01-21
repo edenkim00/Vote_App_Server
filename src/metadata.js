@@ -5,6 +5,11 @@ const ENDPOINT_METADATA = {
     tokenRequired: false,
     next: Controller.postUser,
   },
+  "/app/delete-account": {
+    method: "POST",
+    tokenRequired: true,
+    next: Controller.deleteAccount,
+  },
   "/app/signin": {
     method: "POST",
     tokenRequired: false,

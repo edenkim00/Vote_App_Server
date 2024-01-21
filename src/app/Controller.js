@@ -325,6 +325,14 @@ exports.sendingEmailResult = async function (data, verifiedToken) {
   return response(baseResponse.SUCCESS);
 };
 
+exports.deleteAccount = async function (data, verifiedToken) {
+  const userId = verifiedToken.userId;
+  const res = await Service.deleteAccount(userId);
+  if (!res) {
+    return errResponse(baseResponse.WRONG_BODY);
+  }
+  return response(baseResponse.SUCCESS);
+}
 // function getMaxSports(basketball, volleyball, badminton) {
 //   if (basketball >= volleyball && basketball >= badminton) {
 //     return "Basketball";

@@ -18,6 +18,21 @@ exports.postUser = async function (params) {
   return false;
 };
 
+exports.deleteAccount = async function (params) {
+  const connection = await pool.getConnection(async (conn) => conn);
+  try {
+    connection.beginTransaction();
+    await Dao.deleteAccount(connection, params);
+    connection.commit();
+  } catch (err) {
+    connection.rollback();
+    console.error("[DeleteAccount]", err);
+  } finally {
+    connection.release();
+  }
+  return false;
+}
+
 exports.changePassword = async function (params) {
   // params : [email, newEncodedPassword]
   const connection = await pool.getConnection(async (conn) => conn);
