@@ -42,7 +42,7 @@ echo "[Packing] Source code artifacts"
 echo "------------------------------------------------------------------------------"
 
 # Zip artifacts from asset folder
-zip -qr ../$lambda_function_name.zip * -x "test/*" "mock/*" "package-lock.json"
+zip -qr ../$lambda_function_name.zip * -x "test/*" "mock/*" "package-lock.json" ".github/*" "build_lambda.sh"
 cd ..
 
 # Copy the zipped artifact from /staging to /regional-s3-assets
