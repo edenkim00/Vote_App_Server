@@ -18,7 +18,7 @@ echo "[Init] Remove any old dist files from previous runs"
 echo "------------------------------------------------------------------------------"
 rm -rf $build_dist_dir
 mkdir -p $build_dist_dir
-
+pwd
 echo "------------------------------------------------------------------------------"
 echo "[Init] Install dependencies for Lambda function"
 echo "------------------------------------------------------------------------------"
@@ -35,15 +35,12 @@ if [ -e "package.json" ]; then
     npm ci --only=prod
 fi
 
-cd ..
-
 echo "------------------------------------------------------------------------------"
 echo "[Packing] Source code artifacts"
 echo "------------------------------------------------------------------------------"
 
 # Zip artifacts from asset folder
-zip -qr ../$lambda_function_name.zip Vote_App_Server/**/* -x "test/*" "mock/*" "package-lock.json" ".github/*" "build_lambda.sh" "README.md"
-cd ..
+zip -qr $lambda_function_name.zip * -x "test/*" "mock/*" "package-lock.json" ".github/*" "build_lambda.sh" "README.md"
 
 # Copy the zipped artifact from /staging to /regional-s3-assets
 cp $lambda_function_name.zip $build_dist_dir
