@@ -57,7 +57,7 @@ const ENDPOINT_METADATA = {
   },
   "/app/confirmed-result": {
     method: "GET",
-    tokenRequired: true,
+    tokenRequired: false,
     next: Controller.getConfirmedResult,
   },
 
