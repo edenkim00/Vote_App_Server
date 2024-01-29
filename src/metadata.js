@@ -36,7 +36,7 @@ const ENDPOINT_METADATA = {
   "/app/report-vote-result": {
     method: "POST",
     tokenRequired: true,
-    next: Controller.reportAnalysis
+    next: Controller.reportAnalysis,
   },
   "/app/confirm": {
     method: "POST",
@@ -45,10 +45,10 @@ const ENDPOINT_METADATA = {
   },
 
   /* for vote_category */
-  "/app/vote-category": {
+  "/app/vote-categories": {
     method: "GET",
     tokenRequired: true,
-    next: Controller.getVoteCategory,
+    next: Controller.getVoteCategories,
   },
   "/app/open-vote": {
     method: "POST",

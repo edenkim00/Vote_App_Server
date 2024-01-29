@@ -1,9 +1,8 @@
 const { sendEmail, sendingEmailResult } = require("./lib/email");
 const {
   vote,
-  voteResult,
   confirm,
-  getVoteCategory,
+  getVoteCategories,
   postVoteCategory,
   getConfirmedResult,
 } = require("./lib/vote");
@@ -17,11 +16,10 @@ const {
 
 /* for only admin */
 exports.confirm = confirm;
-exports.getVoteCategory = getVoteCategory;
+exports.getVoteCategory = getVoteCategories;
 exports.postVoteCategory = postVoteCategory;
 
 exports.vote = vote;
-exports.voteResult = voteResult;
 exports.getConfirmedResult = getConfirmedResult;
 
 exports.sendEmail = sendEmail;

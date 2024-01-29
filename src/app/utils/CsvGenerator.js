@@ -1,12 +1,11 @@
 const { prepareVoteDataForReport } = require("../Provider");
 const Dao = require("../Dao");
+const { getGrades, getFullGradeFromGraduationYear } = require("./util");
 const {
   DAYS_AVAILABLE,
   SPORTS_AVAILABLE,
   WEIGHTS_FOR_VOTE_BY_PRIORITY,
-  getGrades,
-  getFullGradeFromGraduationYear,
-} = require("./util");
+} = require("../lib/constants");
 
 const CSV_TABLES = [
   {

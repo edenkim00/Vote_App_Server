@@ -2,7 +2,6 @@ const { pool } = require("../../config/database");
 const Dao = require("./Dao");
 
 exports.postUser = async function (params) {
-  // params = [email, encodedPassword, name, graduationYear, votingWeight]
   const connection = await pool.getConnection(async (conn) => conn);
   try {
     connection.beginTransaction();
@@ -31,10 +30,9 @@ exports.deleteAccount = async function (params) {
     connection.release();
   }
   return false;
-}
+};
 
 exports.changePassword = async function (params) {
-  // params : [email, newEncodedPassword]
   const connection = await pool.getConnection(async (conn) => conn);
   try {
     connection.beginTransaction();
@@ -49,34 +47,17 @@ exports.changePassword = async function (params) {
   return false;
 };
 
-exports.vote = async function (
-  userId,
-  grade,
-  voteData,
-  year,
-  month,
-  edit,
-  isAdmin
-) {
+exports.vote = async function (userId, categoryId, voteData, force = false) {
   const connection = await pool.getConnection(async (conn) => conn);
   try {
+    const toValues = ([day, sports]) =>
+      `(${userId}, '${day}', '${sports[0]}', ${categoryId}, 1), (${userId}, '${day}', '${sports[1]}', ${categoryId}, 2)`;
     connection.beginTransaction();
-    const indexList = isAdmin ? [1] : [1, 2];
-    await Promise.all(
-      indexList.map((priority) =>
-        Dao.vote(
-          connection,
-          userId,
-          grade,
-          _filterVoteDataWithPriority(voteData, priority),
-          year,
-          month,
-          priority,
-          edit,
-          isAdmin
-        )
-      )
-    );
+    const valuesClause = Object.entries(voteData).map(toValues).join(", ");
+    if (force) {
+      await Dao.deleteVotes(connection, [userId, categoryId]);
+    }
+    await Dao.vote(connection, valuesClause);
     connection.commit();
     return true;
   } catch (err) {
@@ -88,10 +69,38 @@ exports.vote = async function (
   return false;
 };
 
-function _filterVoteDataWithPriority(voteData, priority) {
-  return Object.fromEntries(
-    Object.entries(voteData).map(([day, sports]) => [day, sports[priority - 1]])
-  );
-}
+exports.confirm = async function (categoryId, confirmedData, force = false) {
+  const toValues = (entry) => `(${categoryId}, '${entry[0]}', '${entry[1]}')`;
+  const connection = await pool.getConnection(async (conn) => conn);
+  try {
+    connection.beginTransaction();
+    if (force) {
+      await Dao.deleteConfirmedData(connection, [categoryId]);
+    }
+    const valuesClause = Object.entries(confirmedData).map(toValues).join(", ");
+    await Dao.confirm(connection, valuesClause);
+    connection.commit();
+    return true;
+  } catch (err) {
+    connection.rollback();
+    console.error("[Confirm]", err);
+  } finally {
+    connection.release();
+  }
+};
 
-
+exports.postVoteCategory = async function (params) {
+  const connection = await pool.getConnection(async (conn) => conn);
+  try {
+    connection.beginTransaction();
+    await Dao.postVoteCategory(connection, params);
+    connection.commit();
+    return true;
+  } catch (err) {
+    connection.rollback();
+    console.error("[PostVoteCategory]", err);
+  } finally {
+    connection.release();
+  }
+  return false;
+};

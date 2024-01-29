@@ -1,77 +1,25 @@
-const DAYS_AVAILABLE = [
-  "Mon",
-  "Tue",
-  "Wed",
-  "Thu",
-  "Fri1",
-  "Fri2",
-  "Sat1",
-  "Sat2",
-];
+const {
+  DAYS_AVAILABLE,
+  SPORTS_AVAILABLE,
+  WEIGHTS_FOR_VOTE_BY_PRIORITY,
+  NOT_SELECTED,
+} = require("../lib/constants");
 
-const SPORTS_AVAILABLE = [
-  "Basketball",
-  "Badminton",
-  "Volleyball",
-  "Netball",
-  "None",
-];
-const WEIGHTS_FOR_VOTE_BY_PRIORITY = [3, 2];
-
-function isValidVoteData(year, month, voteData, isAdmin) {
-  const today = new Date();
-
-  const aWeekLater = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate() + 7
-  );
-  if (!isAdmin) {
-    const cutOffYear = parseInt(aWeekLater.getFullYear());
-    const cutoffMonth = parseInt(aWeekLater.getMonth()) + 1;
-    // 6001
-    if (!(cutOffYear <= year && year <= cutOffYear + 1)) {
-      return false;
-    }
-
-    // 6002
-    if (year == cutOffYear + 1) {
-      if (!(month == 1 && cutoffMonth == 12)) {
-        return false;
-      }
-    }
-
-    // 6003
-    if (month <= cutoffMonth) {
-      return false;
-    }
-  }
-  if (
-    !voteData ||
-    Object.entries(voteData)
-      .map(
-        ([day, sports]) =>
-          DAYS_AVAILABLE.includes(day) &&
-          sports?.length === 2 - (isAdmin ? 1 : 0) &&
-          SPORTS_AVAILABLE.includes(sports[0]) &&
-          (isAdmin ? true : SPORTS_AVAILABLE.includes(sports[1]))
-      )
-      .some((x) => !x)
-  ) {
+function isValidVoteData(voteData) {
+  if (!voteData || !Object.keys(voteData).length) {
     return false;
   }
-  return true;
-}
-
-function isValidDateForVoteResult(year, month) {
-  const today = new Date();
-  const todayYear = parseInt(today.getFullYear());
-  const todayMonth = parseInt(today.getMonth()) + 1;
-  if (year > todayYear) {
-    return false;
-  }
-  if (year == todayYear) {
-    if (month > todayMonth) {
+  for (const day of DAYS_AVAILABLE) {
+    if (
+      !voteData[day] ||
+      !Array.isArray(voteData[day]) ||
+      !(voteData[day].length === 2) ||
+      (voteData[day][0] !== NOT_SELECTED &&
+        voteData[day][0] == voteData[day][1])
+    ) {
+      return false;
+    }
+    if (!voteData[day].every((sport) => SPORTS_AVAILABLE.includes(sport))) {
       return false;
     }
   }
@@ -127,14 +75,45 @@ function getGrades(grade) {
   }
 }
 
+function isAdmin(userId) {
+  return userId == 1;
+}
+
+function isValidConfirmedResult(confirmed) {
+  if (!DAYS_AVAILABLE.every((day) => !!confirmed[day])) {
+    return false;
+  }
+  if (
+    !Object.values(confirmed).every((sports) =>
+      SPORTS_AVAILABLE.includes(sports)
+    )
+  ) {
+    return false;
+  }
+  return true;
+}
+
+function getKSTDateTimeString() {
+  const now = new Date();
+  const kstNow = now.toLocaleDateString("ko-KR", {
+    timeZone: "Asia/Seoul",
+  });
+
+  // format yyyy-mm-dd
+  const splited = kstNow.split(".").map((e) => e.trim());
+  const year = splited[0].toString();
+  const month = splited[1].toString().padStart(2, "0");
+  const day = splited[2].split(",")[0].toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 module.exports = {
   getGrade,
   getGrades,
   getFullGradeFromGraduationYear,
   isValidVoteData,
-  isValidDateForVoteResult,
   processVoteResult,
-  WEIGHTS_FOR_VOTE_BY_PRIORITY,
-  DAYS_AVAILABLE,
-  SPORTS_AVAILABLE,
+  isAdmin,
+  isValidConfirmedResult,
+  getKSTDateTimeString,
 };
