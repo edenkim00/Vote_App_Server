@@ -110,7 +110,7 @@ exports.selectVoteCategoryWithVoteNameAndGrade = async function (params) {
   return await select(Dao.selectVoteCategoryWithVoteNameAndGrade, params);
 };
 
-exports.selectVoteCategories = async function (grade, onlyOpened = false) {
+exports.selectVoteCategories = async function (grade, forAdmin = false) {
   if (forAdmin) {
     return await select(Dao.selectVoteCategories, [grade]);
   }

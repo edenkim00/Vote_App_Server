@@ -108,9 +108,10 @@ exports.getVoteCategories = async function (data, verifiedToken) {
     return errResponse(baseResponse.WRONG_BODY);
   }
 
-  const onlyOpened = isAdmin(userId) ? false : true;
-
-  const result = await Provider.selectVoteCategories(data.grade, onlyOpened);
+  const result = await Provider.selectVoteCategories(
+    data.grade,
+    isAdmin(userId)
+  );
   if (!result) {
     return errResponse(baseResponse.SERVER_ISSUE);
   }

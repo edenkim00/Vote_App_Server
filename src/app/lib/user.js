@@ -6,7 +6,7 @@ const { response, errResponse } = require("../../../config/response");
 const hmacSHA512 = require("crypto-js/hmac-sha512");
 const jwt = require("jsonwebtoken");
 var Base64 = require("crypto-js/enc-base64");
-const { getGrade } = require("../utils/util");
+const { toGrade } = require("../utils/util");
 require("dotenv").config();
 
 exports.postUser = async function (data) {
@@ -124,7 +124,7 @@ exports.userInfo = async function (_, verifiedToken) {
   const userInfo = await Provider.getUserInfo(userId);
   const { name, graduationYear, sex } = userInfo[0];
 
-  const grade = getGrade(graduationYear);
+  const grade = toGrade(graduationYear);
   const result = {
     userId,
     name,

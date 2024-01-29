@@ -109,11 +109,11 @@ function getKSTDateTimeString() {
 
 module.exports = {
   toGrade,
-  getGrades,
   getFullGradeFromGraduationYear,
   isValidVoteData,
   processVoteResult,
   isAdmin,
   isValidConfirmedResult,
   getKSTDateTimeString,
+  getGrades,
 };
