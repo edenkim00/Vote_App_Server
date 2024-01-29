@@ -3,7 +3,7 @@ const {
   vote,
   voteResult,
   confirm,
-  getVoteCategory,
+  getVoteCategories,
   postVoteCategory,
   getConfirmedResult,
 } = require("./lib/vote");
@@ -17,7 +17,7 @@ const {
 
 /* for only admin */
 exports.confirm = confirm;
-exports.getVoteCategory = getVoteCategory;
+exports.getVoteCategory = getVoteCategories;
 exports.postVoteCategory = postVoteCategory;
 
 exports.vote = vote;

@@ -127,6 +127,38 @@ async function getReportData(connection, params) {
   return result;
 }
 
+async function deleteConfirmedData(connection, params) {
+  const Query = `UPDATE Result SET status = 'deleted' WHERE categoryId = ? and grade = ?;`;
+  const [result] = await connection.query(Query, params);
+  return result;
+}
+
+async function confirm(connection, valuesClause) {
+  const Query = `INSERT INTO Result(categoryId, grade, day, sport) VALUES ${valuesClause};`;
+  const [result] = await connection.query(Query);
+  return result;
+}
+
+async function selectVoteCategoryWithVoteNameAndGrade(connection, params) {
+  const Query = `SELECT * FROM VoteCategory WHERE name = ? and grade = ?;`;
+  const [result] = await connection.query(Query, params);
+  return result;
+}
+
+async function selectVoteCategories(connection, params) {
+  const time = params[1];
+  const timeCondition = time ? `and opened_dt <= ? and deadline >= ?` : "";
+  const Query = `SELECT * FROM VoteCategory WHERE grade = ? ${timeCondition};`;
+  const [result] = await connection.query(Query, params);
+  return result;
+}
+
+async function postVoteCategory(connection, params) {
+  const Query = `INSERT INTO VoteCategory(name, grade, opened_dt, deadline) VALUES (?,?,?,?);`;
+  await connection.query(Query, params);
+  return;
+}
+
 module.exports = {
   getUserByEmail,
   postUser,
@@ -144,4 +176,9 @@ module.exports = {
   getReportData,
   getReportDetailData,
   deleteAccount,
+  deleteConfirmedData,
+  confirm,
+  selectVoteCategoryWithVoteNameAndGrade,
+  selectVoteCategories,
+  postVoteCategory,
 };

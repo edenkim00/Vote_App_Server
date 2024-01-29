@@ -1,6 +1,7 @@
 const { pool } = require("../../config/database");
 const Dao = require("./Dao");
 const { DAYS_AVAILABLE } = require("./lib/constants");
+const { getKSTDateTimeString } = require("./utils/util");
 
 async function select(f, params) {
   try {
@@ -103,4 +104,23 @@ exports.prepareVoteDataForReport = async function (
   } catch (err) {
     console.error("[prepareVoteDataForReport]", err);
   }
+};
+
+exports.selectVoteCategoryWithVoteNameAndGrade = async function (
+  voteName,
+  grade
+) {
+  return await select(Dao.selectVoteCategoryWithVoteNameAndGrade, [
+    voteName,
+    grade,
+  ]);
+};
+
+exports.selectVoteCategories = async function (grade, onlyOpened = false) {
+  const now = getKSTDateTimeString();
+  const params = [grade];
+  if (onlyOpened) {
+    params.push(now);
+  }
+  return await select(Dao.selectVoteCategories, params);
 };

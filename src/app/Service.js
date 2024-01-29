@@ -2,7 +2,6 @@ const { pool } = require("../../config/database");
 const Dao = require("./Dao");
 
 exports.postUser = async function (params) {
-  // params = [email, encodedPassword, name, graduationYear, votingWeight]
   const connection = await pool.getConnection(async (conn) => conn);
   try {
     connection.beginTransaction();
@@ -31,10 +30,9 @@ exports.deleteAccount = async function (params) {
     connection.release();
   }
   return false;
-}
+};
 
 exports.changePassword = async function (params) {
-  // params : [email, newEncodedPassword]
   const connection = await pool.getConnection(async (conn) => conn);
   try {
     connection.beginTransaction();
@@ -94,4 +92,47 @@ function _filterVoteDataWithPriority(voteData, priority) {
   );
 }
 
+exports.confirm = async function (
+  categoryId,
+  grade,
+  confirmedData,
+  force = false
+) {
+  const toValues = (entry) =>
+    `(${categoryId}, '${grade}', '${entry[0]}', '${entry[1]}')`;
 
+  const connection = await pool.getConnection(async (conn) => conn);
+  try {
+    connection.beginTransaction();
+    if (force) {
+      await Dao.deleteConfirmedData(connection, [categoryId, grade]);
+    }
+
+    const valuesClause = Object.entries(confirmedData).map(toValues).join(", ");
+    await Dao.confirm(connection, valuesClause);
+
+    connection.commit();
+    return true;
+  } catch (err) {
+    connection.rollback();
+    console.error("[Confirm]", err);
+  } finally {
+    connection.release();
+  }
+};
+
+exports.postVoteCategory = async function (params) {
+  const connection = await pool.getConnection(async (conn) => conn);
+  try {
+    connection.beginTransaction();
+    await Dao.postVoteCategory(connection, params);
+    connection.commit();
+    return true;
+  } catch (err) {
+    connection.rollback();
+    console.error("[PostVoteCategory]", err);
+  } finally {
+    connection.release();
+  }
+  return false;
+};

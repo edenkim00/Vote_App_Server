@@ -116,6 +116,12 @@ module.exports = {
     message: "Not confirmed by admin.",
   },
 
+  ALREADY_EXIST_VOTE_CATEGORY_NAME: {
+    isSuccess: false,
+    code: 9001,
+    message: "Already exist vote category name.",
+  },
+
   SERVER_ISSUE: {
     isSuccess: false,
     code: 10001,

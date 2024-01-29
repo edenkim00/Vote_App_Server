@@ -7,6 +7,7 @@ const {
   isValidVoteData,
   isValidDateForVoteResult,
   isAdmin,
+  isValidConfirmedResult,
 } = require("../utils/util");
 require("dotenv").config();
 const DEFAULT_VOTE_OPENED_DT = "2024-01-01";
@@ -99,26 +100,15 @@ exports.confirm = async function (data, verifiedToken) {
   if (!(category_id && grade && confirmed_data)) {
     return errResponse(baseResponse.WRONG_BODY);
   }
+  if (!isValidConfirmedResult(confirmed_data)) {
+    return errResponse(baseResponse.WRONG_BODY);
+  }
 
   const result = await Service.confirm(category_id, grade, confirmed_data);
   if (!result) {
     return errResponse(baseResponse.WRONG_VOTE_DATA);
   }
   return response(baseResponse.SUCCESS);
-};
-
-exports.getVoteCategory = async function (data, verifiedToken) {
-  const userId = verifiedToken.userId;
-  if (!isAdmin(userId)) {
-    return errResponse(baseResponse.TOKEN_ERROR);
-  }
-
-  const result = await Provider.getVoteCategory();
-  if (!result) {
-    return errResponse(baseResponse.SERVER_ISSUE);
-  }
-
-  return response(baseResponse.SUCCESS, result);
 };
 
 exports.postVoteCategory = async function (data, verifiedToken) {
@@ -132,6 +122,12 @@ exports.postVoteCategory = async function (data, verifiedToken) {
     return errResponse(baseResponse.WRONG_BODY);
   }
 
+  const exist = await Provider.selectVoteCategory([vote_name, grade]);
+  if (exist?.length) {
+    // 9001
+    return errResponse(baseResponse.ALREADY_EXIST_VOTE_CATEGORY_NAME);
+  }
+
   const result = await Service.postVoteCategory(
     vote_name,
     grade,
@@ -142,6 +138,22 @@ exports.postVoteCategory = async function (data, verifiedToken) {
     return errResponse(baseResponse.SERVER_ISSUE);
   }
   return response(baseResponse.SUCCESS);
+};
+
+exports.getVoteCategories = async function (data, verifiedToken) {
+  const userId = verifiedToken.userId;
+  if (!isAdmin(userId)) {
+    return errResponse(baseResponse.TOKEN_ERROR);
+  }
+
+  const onlyOpened = isAdmin(userId) ? false : true;
+
+  const result = await Provider.getVoteCategory(onlyOpened);
+  if (!result) {
+    return errResponse(baseResponse.SERVER_ISSUE);
+  }
+
+  return response(baseResponse.SUCCESS, result);
 };
 
 exports.getConfirmedResult = async function (data, verifiedToken) {

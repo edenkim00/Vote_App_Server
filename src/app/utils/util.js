@@ -117,6 +117,33 @@ function isAdmin(userId) {
   return userId == 1;
 }
 
+function isValidConfirmedResult(confirmed) {
+  if (!DAYS_AVAILABLE.every((day) => !!confirmed[day])) {
+    return false;
+  }
+  if (
+    !Object.values(confirmed).every((sports) =>
+      SPORTS_AVAILABLE.includes(sports)
+    )
+  ) {
+    return false;
+  }
+  return true;
+}
+
+function getKSTDateTimeString() {
+  const now = new Date();
+  const kstNow = now.toLocaleDateString("ko-KR", {
+    timeZone: "Asia/Seoul",
+  });
+  // format yyyy-mm-dd
+  const splited = kstNow.split("/");
+  const year = splited[0].toString();
+  const month = splited[1].toString().padStart(2, "0");
+  const day = splited[2].split(",")[0].toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 module.exports = {
   getGrade,
   getGrades,
@@ -125,4 +152,6 @@ module.exports = {
   isValidDateForVoteResult,
   processVoteResult,
   isAdmin,
+  isValidConfirmedResult,
+  getKSTDateTimeString,
 };
