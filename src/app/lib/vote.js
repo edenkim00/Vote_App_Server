@@ -6,6 +6,7 @@ const {
   isValidVoteData,
   isAdmin,
   isValidConfirmedResult,
+  toGrade,
 } = require("../utils/util");
 const { GRADES } = require("./constants");
 require("dotenv").config();
@@ -100,7 +101,10 @@ exports.getVoteCategories = async function (data, verifiedToken) {
   if (!userId) {
     return errResponse(baseResponse.TOKEN_ERROR);
   }
-  if (!data?.grade || !GRADES.includes(data.grade)) {
+  if (
+    !data?.graduation_year ||
+    !GRADES.includes(toGrade(data?.graduation_year))
+  ) {
     return errResponse(baseResponse.WRONG_BODY);
   }
 

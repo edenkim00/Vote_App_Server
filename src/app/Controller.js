@@ -16,7 +16,7 @@ const {
 
 /* for only admin */
 exports.confirm = confirm;
-exports.getVoteCategory = getVoteCategories;
+exports.getVoteCategories = getVoteCategories;
 exports.postVoteCategory = postVoteCategory;
 
 exports.vote = vote;

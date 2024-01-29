@@ -63,7 +63,7 @@ function getFullGradeFromGraduationYear(graduationYear) {
   return 13 - (graduationYear - currentYear) + (currentMonth >= 8 ? 1 : 0);
 }
 
-function getGrade(graduationYear) {
+function toGrade(graduationYear) {
   return getFullGradeFromGraduationYear(graduationYear) > 9 ? "HS" : "MS";
 }
 
@@ -108,7 +108,7 @@ function getKSTDateTimeString() {
 }
 
 module.exports = {
-  getGrade,
+  toGrade,
   getGrades,
   getFullGradeFromGraduationYear,
   isValidVoteData,
