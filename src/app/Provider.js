@@ -111,12 +111,11 @@ exports.selectVoteCategoryWithVoteNameAndGrade = async function (params) {
 };
 
 exports.selectVoteCategories = async function (grade, onlyOpened = false) {
-  const now = getKSTDateTimeString();
-  const params = [grade];
-  if (onlyOpened) {
-    params.push(...[now, now]);
+  if (forAdmin) {
+    return await select(Dao.selectVoteCategories, [grade]);
   }
-  return await select(Dao.selectVoteCategories, params);
+  const now = getKSTDateTimeString();
+  return await select(Dao.selectVoteCategories, [grade, now, now]);
 };
 
 exports.getConfirmedResult = async function (categoryId) {

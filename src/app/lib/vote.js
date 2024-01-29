@@ -32,7 +32,7 @@ exports.vote = async function (data, verifiedToken) {
 
   const result = await Service.vote(userId, category_id, vote_data, force);
   if (!result) {
-    return errResponse(baseResponse.WRONG_VOTE_DATA);
+    return errResponse(baseResponse.SERVER_ISSUE);
   }
   return response(baseResponse.SUCCESS);
 };
@@ -126,7 +126,7 @@ exports.getConfirmedResult = async function (data, verifiedToken) {
 
   const { cateogry_id } = data;
   if (!cateogry_id) {
-    return errResponse(baseResponse.WRONG_QUERY_STRING);
+    return errResponse(baseResponse.WRONG_BODY);
   }
   const result = await Provider.getConfirmedResult(cateogry_id);
   if (!result) {

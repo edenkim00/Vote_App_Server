@@ -20,7 +20,7 @@ exports.sendEmail = async function (data) {
 
   let authNum = Math.random().toString().substring(2, 8);
   // 7001
-  if (email == null || email == "") return response(baseResponse.EMAILEMPTY);
+  if (email == null || email == "") return response(baseResponse.WRONG_BODY);
   const mailPoster = nodemailer.createTransport(
     smtpTransport({
       service: "gmail",
@@ -65,7 +65,7 @@ exports.sendingEmailResult = async function (data, verifiedToken) {
   for (const grade of GRADES) {
     const csvRawString = await CSVGenerator.generate(year, month, grade);
     if (!csvRawString) {
-      return errResponse(baseResponse.WRONG_VOTE_DATA);
+      return errResponse(baseResponse.SERVER_ISSUE);
     }
     const path = csvFilePath(grade);
     fs.writeFileSync(path, csvRawString);

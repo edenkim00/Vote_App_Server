@@ -120,9 +120,11 @@ async function selectVoteCategoryWithVoteNameAndGrade(connection, params) {
 }
 
 async function selectVoteCategories(connection, params) {
+  const grade = params[0];
   const time = params[1];
-  const timeCondition = time ? `and opened_dt <= ? and deadline >= ?` : "";
-  const Query = `SELECT * FROM VoteCategory WHERE grade = ? ${timeCondition} and status='activate';`;
+  const gradeCondition = grade ? `grade = ? and` : "";
+  const timeCondition = time ? `opened_dt <= ? and deadline >= ? and` : "";
+  const Query = `SELECT * FROM VoteCategory WHERE ${gradeCondition} ${timeCondition} status='activate';`;
   const [result] = await connection.query(Query, params);
   return result;
 }
