@@ -128,7 +128,7 @@ async function getReportData(connection, params) {
 }
 
 async function deleteConfirmedData(connection, params) {
-  const Query = `UPDATE Result SET status = 'deleted' WHERE categoryId = ? and grade = ?;`;
+  const Query = `UPDATE Result SET status = 'deleted' WHERE categoryId = ? and grade = ? and status='activate';`;
   const [result] = await connection.query(Query, params);
   return result;
 }
@@ -140,7 +140,7 @@ async function confirm(connection, valuesClause) {
 }
 
 async function selectVoteCategoryWithVoteNameAndGrade(connection, params) {
-  const Query = `SELECT * FROM VoteCategory WHERE name = ? and grade = ?;`;
+  const Query = `SELECT * FROM VoteCategory WHERE name = ? and grade = ? and status='activate';`;
   const [result] = await connection.query(Query, params);
   return result;
 }
@@ -148,7 +148,7 @@ async function selectVoteCategoryWithVoteNameAndGrade(connection, params) {
 async function selectVoteCategories(connection, params) {
   const time = params[1];
   const timeCondition = time ? `and opened_dt <= ? and deadline >= ?` : "";
-  const Query = `SELECT * FROM VoteCategory WHERE grade = ? ${timeCondition};`;
+  const Query = `SELECT * FROM VoteCategory WHERE grade = ? ${timeCondition} and status='activate';`;
   const [result] = await connection.query(Query, params);
   return result;
 }
@@ -157,6 +157,12 @@ async function postVoteCategory(connection, params) {
   const Query = `INSERT INTO VoteCategory(name, grade, opened_dt, deadline) VALUES (?,?,?,?);`;
   await connection.query(Query, params);
   return;
+}
+
+async function getConfirmedResult(connection, params) {
+  const Query = `SELECT * FROM Result WHERE categoryId = ? and grade = ? and status='activate';`;
+  const [result] = await connection.query(Query, params);
+  return result;
 }
 
 module.exports = {
@@ -181,4 +187,5 @@ module.exports = {
   selectVoteCategoryWithVoteNameAndGrade,
   selectVoteCategories,
   postVoteCategory,
+  getConfirmedResult,
 };

@@ -124,3 +124,7 @@ exports.selectVoteCategories = async function (grade, onlyOpened = false) {
   }
   return await select(Dao.selectVoteCategories, params);
 };
+
+exports.getConfirmedResult = async function (categoryId, grade) {
+  return await select(Dao.getConfirmedResult, [categoryId, grade]);
+};

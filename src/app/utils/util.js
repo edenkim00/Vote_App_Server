@@ -49,21 +49,6 @@ function isValidVoteData(year, month, voteData, isAdmin) {
   return true;
 }
 
-function isValidDateForVoteResult(year, month) {
-  const today = new Date();
-  const todayYear = parseInt(today.getFullYear());
-  const todayMonth = parseInt(today.getMonth()) + 1;
-  if (year > todayYear) {
-    return false;
-  }
-  if (year == todayYear) {
-    if (month > todayMonth) {
-      return false;
-    }
-  }
-  return true;
-}
-
 function processVoteResult(voteResults) {
   const voteData = Object.fromEntries(
     DAYS_AVAILABLE.map((d) => [
@@ -149,7 +134,6 @@ module.exports = {
   getGrades,
   getFullGradeFromGraduationYear,
   isValidVoteData,
-  isValidDateForVoteResult,
   processVoteResult,
   isAdmin,
   isValidConfirmedResult,
