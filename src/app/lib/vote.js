@@ -109,7 +109,7 @@ exports.getVoteCategories = async function (data, verifiedToken) {
   }
 
   const result = await Provider.selectVoteCategories(
-    data.grade,
+    toGrade(data?.graduation_year),
     isAdmin(userId)
   );
   if (!result) {
