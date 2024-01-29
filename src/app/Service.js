@@ -23,6 +23,7 @@ exports.deleteAccount = async function (params) {
     connection.beginTransaction();
     await Dao.deleteAccount(connection, params);
     connection.commit();
+    return true;
   } catch (err) {
     connection.rollback();
     console.error("[DeleteAccount]", err);
