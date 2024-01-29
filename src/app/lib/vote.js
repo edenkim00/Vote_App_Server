@@ -6,6 +6,7 @@ const {
   isValidVoteData,
   isAdmin,
   isValidConfirmedResult,
+  toGrade,
 } = require("../utils/util");
 const { GRADES } = require("./constants");
 require("dotenv").config();
@@ -31,7 +32,7 @@ exports.vote = async function (data, verifiedToken) {
 
   const result = await Service.vote(userId, category_id, vote_data, force);
   if (!result) {
-    return errResponse(baseResponse.WRONG_VOTE_DATA);
+    return errResponse(baseResponse.SERVER_ISSUE);
   }
   return response(baseResponse.SUCCESS);
 };
@@ -100,7 +101,10 @@ exports.getVoteCategories = async function (data, verifiedToken) {
   if (!userId) {
     return errResponse(baseResponse.TOKEN_ERROR);
   }
-  if (!data?.grade || !GRADES.includes(data.grade)) {
+  if (
+    !data?.graduation_year ||
+    !GRADES.includes(toGrade(data?.graduation_year))
+  ) {
     return errResponse(baseResponse.WRONG_BODY);
   }
 
@@ -122,7 +126,7 @@ exports.getConfirmedResult = async function (data, verifiedToken) {
 
   const { cateogry_id } = data;
   if (!cateogry_id) {
-    return errResponse(baseResponse.WRONG_QUERY_STRING);
+    return errResponse(baseResponse.WRONG_BODY);
   }
   const result = await Provider.getConfirmedResult(cateogry_id);
   if (!result) {

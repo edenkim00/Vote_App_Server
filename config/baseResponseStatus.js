@@ -37,12 +37,6 @@ module.exports = {
     message: "Invalid request.",
   },
 
-  WRONG_QUERY_STRING: {
-    isSuccess: false,
-    code: 2001,
-    message: "Fail.",
-  },
-
   NOT_EXIST_USER: {
     isSuccess: false,
     code: 3001,
@@ -63,51 +57,10 @@ module.exports = {
     message: "You already voted.",
   },
 
-  DATE_ERROR: {
-    isSuccess: false,
-    code: 6001,
-    message: "Date is wrong.",
-  },
-
-  VOTE_NOT_END: {
-    isSuccess: false,
-    code: 6002,
-    message: "The vote has not finished yet.",
-  },
-
-  CLOSED_VOTE: {
-    isSuccess: false,
-    code: 6003,
-    message: "The vote has not finished yet.",
-  },
-
-  INVALID_VOTE_DATA: {
-    isSuccess: false,
-    code: 6004,
-    message: "Invalid vote data.",
-  },
-
-  EMAILEMPTY: {
-    isSuccess: false,
-    code: 7001,
-    message: "Please enter your email.",
-  },
   EMAIL_SEND_ERROR: {
     isSuccess: false,
     code: 7002,
     message: "Email send error.",
-  },
-
-  WRONG_VOTE_DATA: {
-    isSuccess: false,
-    code: 8001,
-    message: "Wrong vote data.",
-  },
-
-  WRONG_VOTE_DATE: {
-    isSuccess: false,
-    code: 8002,
-    message: "Wrong vote date.",
   },
 
   NOT_CONFIRMED_BY_ADMIN: {
