@@ -1,6 +1,6 @@
 const { pool } = require("../../config/database");
 const Dao = require("./Dao");
-const { DAYS_AVAILABLE } = require("./utils/util");
+const { DAYS_AVAILABLE } = require("./lib/constants");
 
 async function select(f, params) {
   try {

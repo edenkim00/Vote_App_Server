@@ -1,22 +1,8 @@
-const DAYS_AVAILABLE = [
-  "Mon",
-  "Tue",
-  "Wed",
-  "Thu",
-  "Fri1",
-  "Fri2",
-  "Sat1",
-  "Sat2",
-];
-
-const SPORTS_AVAILABLE = [
-  "Basketball",
-  "Badminton",
-  "Volleyball",
-  "Netball",
-  "None",
-];
-const WEIGHTS_FOR_VOTE_BY_PRIORITY = [3, 2];
+const {
+  DAYS_AVAILABLE,
+  SPORTS_AVAILABLE,
+  WEIGHTS_FOR_VOTE_BY_PRIORITY,
+} = require("../lib/constants");
 
 function isValidVoteData(year, month, voteData, isAdmin) {
   const today = new Date();
@@ -127,6 +113,10 @@ function getGrades(grade) {
   }
 }
 
+function isAdmin(userId) {
+  return userId == 1;
+}
+
 module.exports = {
   getGrade,
   getGrades,
@@ -134,7 +124,5 @@ module.exports = {
   isValidVoteData,
   isValidDateForVoteResult,
   processVoteResult,
-  WEIGHTS_FOR_VOTE_BY_PRIORITY,
-  DAYS_AVAILABLE,
-  SPORTS_AVAILABLE,
+  isAdmin,
 };

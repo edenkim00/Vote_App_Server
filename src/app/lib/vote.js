@@ -6,8 +6,10 @@ const {
   getGrade,
   isValidVoteData,
   isValidDateForVoteResult,
+  isAdmin,
 } = require("../utils/util");
 require("dotenv").config();
+const DEFAULT_VOTE_OPENED_DT = "2024-01-01";
 
 exports.vote = async function (data, verifiedToken) {
   const userId = verifiedToken.userId;
@@ -88,8 +90,73 @@ exports.voteResult = async function (data, verifiedToken) {
 };
 
 /* for only admin */
+exports.confirm = async function (data, verifiedToken) {
+  const userId = verifiedToken.userId;
+  if (!isAdmin(userId)) {
+    return errResponse(baseResponse.TOKEN_ERROR);
+  }
+  const { category_id, grade, confirmed_data } = data;
+  if (!(category_id && grade && confirmed_data)) {
+    return errResponse(baseResponse.WRONG_BODY);
+  }
 
-exports.confirm = async function () {};
-exports.getVoteCategory = async function () {};
-exports.postVoteCategory = async function () {};
-exports.getConfirmedResult = async function () {};
+  const result = await Service.confirm(category_id, grade, confirmed_data);
+  if (!result) {
+    return errResponse(baseResponse.WRONG_VOTE_DATA);
+  }
+  return response(baseResponse.SUCCESS);
+};
+
+exports.getVoteCategory = async function (data, verifiedToken) {
+  const userId = verifiedToken.userId;
+  if (!isAdmin(userId)) {
+    return errResponse(baseResponse.TOKEN_ERROR);
+  }
+
+  const result = await Provider.getVoteCategory();
+  if (!result) {
+    return errResponse(baseResponse.SERVER_ISSUE);
+  }
+
+  return response(baseResponse.SUCCESS, result);
+};
+
+exports.postVoteCategory = async function (data, verifiedToken) {
+  const userId = verifiedToken.userId;
+  if (!isAdmin(userId)) {
+    return errResponse(baseResponse.TOKEN_ERROR);
+  }
+
+  const { vote_name, grade, opened_dt, deadline } = data;
+  if (!(vote_name && grade && deadline)) {
+    return errResponse(baseResponse.WRONG_BODY);
+  }
+
+  const result = await Service.postVoteCategory(
+    vote_name,
+    grade,
+    opened_dt ?? DEFAULT_VOTE_OPENED_DT,
+    deadline
+  );
+  if (!result) {
+    return errResponse(baseResponse.SERVER_ISSUE);
+  }
+  return response(baseResponse.SUCCESS);
+};
+
+exports.getConfirmedResult = async function (data, verifiedToken) {
+  const userId = verifiedToken.userId;
+  if (!isAdmin(userId)) {
+    return errResponse(baseResponse.TOKEN_ERROR);
+  }
+
+  const { grade, cateogry_id } = data;
+  if (!(grade && cateogry_id)) {
+    return errResponse(baseResponse.WRONG_QUERY_STRING);
+  }
+  const result = await Provider.getConfirmedResult(grade, cateogry_id);
+  if (!result) {
+    return errResponse(baseResponse.SERVER_ISSUE);
+  }
+  return response(baseResponse.SUCCESS, result);
+};

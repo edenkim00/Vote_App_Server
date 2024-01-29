@@ -115,4 +115,10 @@ module.exports = {
     code: 8003,
     message: "Not confirmed by admin.",
   },
+
+  SERVER_ISSUE: {
+    isSuccess: false,
+    code: 10001,
+    message: "Temporary server issue occurred.",
+  },
 };
