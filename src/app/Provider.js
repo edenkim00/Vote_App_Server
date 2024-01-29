@@ -119,5 +119,18 @@ exports.selectVoteCategories = async function (grade, forAdmin = false) {
 };
 
 exports.getConfirmedResult = async function (categoryId) {
-  return await select(Dao.getConfirmedResult, [categoryId]);
+  const data = await select(Dao.getConfirmedResult, [categoryId]);
+  if (!data) {
+    return undefined;
+  }
+  if (!data.length) {
+    return [];
+  }
+
+  return Object.fromEntries(
+    DAYS_AVAILABLE.map((d) => [
+      d,
+      data.filter((r) => r.day === d).map((r) => r.sports)[0] ?? undefined,
+    ])
+  );
 };

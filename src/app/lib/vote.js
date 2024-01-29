@@ -52,7 +52,7 @@ exports.confirm = async function (data, verifiedToken) {
   }
   if (!force) {
     const exist = await Provider.getConfirmedResult(category_id);
-    if (exist.length > 0) {
+    if (exist && Object.keys(exist).length > 0) {
       return errResponse(baseResponse.ALREADY_EXIST_VOTE);
     }
   }
@@ -125,8 +125,14 @@ exports.getConfirmedResult = async function (data) {
     return errResponse(baseResponse.WRONG_BODY);
   }
   const result = await Provider.getConfirmedResult(category_id);
+
   if (!result) {
     return errResponse(baseResponse.SERVER_ISSUE);
   }
+
+  if (Array.isArray(result) && !result.length) {
+    return errResponse(baseResponse.NOT_CONFIRMED_BY_ADMIN);
+  }
+
   return response(baseResponse.SUCCESS, result);
 };
