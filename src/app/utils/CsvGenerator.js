@@ -1,6 +1,6 @@
 const { prepareVoteDataForReport } = require("../Provider");
 const Dao = require("../Dao");
-const { getGrades, getFullGradeFromGraduationYear } = require("./util");
+const { getFullGradeFromGraduationYear, getGrades } = require("./util");
 const {
   DAYS_AVAILABLE,
   SPORTS_AVAILABLE,
