@@ -1,8 +1,8 @@
 /* */
 const {
+  postVoteCategory,
   confirm,
   getVoteCategory,
-  postVoteCategory,
 
   vote,
   getConfirmedResult,
@@ -19,7 +19,34 @@ const {
 
 const test = confirm;
 const userId = 1;
-const data = {};
+const data = {
+  category_id: 1,
+  force: true,
+  confirmed_data: {
+    Mon: "Basketball",
+    Tue: "Basketball",
+    Wed: "Basketball",
+    Thu: "Basketball",
+    Fri1: "Basketball",
+    Fri2: "Basketball",
+    Sat1: "Netball",
+    Sat2: "Netball",
+  },
+};
+// const data = {
+//   category_id: 1,
+//   force: true,
+//   vote_data: {
+//     Mon: ["None", "None"],
+//     Tue: ["Basketball", "Badminton"],
+//     Wed: ["Basketball", "Badminton"],
+//     Thu: ["Basketball", "Badminton"],
+//     Fri1: ["Basketball", "Badminton"],
+//     Fri2: ["Basketball", "Badminton"],
+//     Sat1: ["Basketball", "Badminton"],
+//     Sat2: ["Basketball", "Badminton"],
+//   },
+// };
 
 test(data, { userId }).then((res) => {
   console.log(res);

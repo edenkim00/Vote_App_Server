@@ -48,34 +48,8 @@ async function deleteAccount(connection, params) {
   return;
 }
 
-async function vote(
-  connection,
-  userId,
-  grade,
-  voteData,
-  year,
-  month,
-  priority,
-  edit,
-  isAdmin
-) {
-  const VALUES = Object.entries(voteData)
-    .map(([day, sport]) => {
-      return `(${userId}, ${year}, ${month}, ${priority}, '${grade}', '${day}', '${sport}', ${isAdmin})`;
-    })
-    .join(",");
-  if (edit) {
-    await connection.query(
-      `UPDATE Voting SET status='deleted' WHERE user_id = ${userId} and year = ${year} and month = ${month} and grade = '${grade}' and priority = ${priority} and is_admin = ${isAdmin} and status='activate';`
-    );
-  }
-  const Query = `INSERT INTO Voting(user_id, year, month, priority, grade, day, sport, is_admin) VALUES ${VALUES};`;
-  const [result] = await connection.query(Query);
-  return result;
-}
-
 async function doubleCheckVote(connection, params) {
-  const Query = `SELECT id from Voting WHERE user_id = ? and year = ? and month = ? and status='activate'`;
+  const Query = `SELECT id from Vote WHERE user_id = ? and category_id = ? and status='activate'`;
   const [result] = await connection.query(Query, params);
   return result;
 }
@@ -89,7 +63,7 @@ async function voteResult(connection, params) {
 }
 
 async function voteDelete(connection, params) {
-  const Query = `UPDATE Vote SET status = 'deleted' WHERE userId = ? and date >= ? and date <= ?;`;
+  const Query = `UPDATE Vote SET status = 'deleted' WHERE user_id = ? and date >= ? and date <= ?;`;
   const [result] = await connection.query(Query, params);
   return result;
 }
@@ -128,13 +102,13 @@ async function getReportData(connection, params) {
 }
 
 async function deleteConfirmedData(connection, params) {
-  const Query = `UPDATE Result SET status = 'deleted' WHERE categoryId = ? and grade = ? and status='activate';`;
+  const Query = `UPDATE Result SET status = 'deleted' WHERE category_id = ? and status='activate';`;
   const [result] = await connection.query(Query, params);
   return result;
 }
 
 async function confirm(connection, valuesClause) {
-  const Query = `INSERT INTO Result(categoryId, grade, day, sport) VALUES ${valuesClause};`;
+  const Query = `INSERT INTO Result(category_id, day, sports) VALUES ${valuesClause};`;
   const [result] = await connection.query(Query);
   return result;
 }
@@ -160,8 +134,20 @@ async function postVoteCategory(connection, params) {
 }
 
 async function getConfirmedResult(connection, params) {
-  const Query = `SELECT * FROM Result WHERE categoryId = ? and grade = ? and status='activate';`;
+  const Query = `SELECT * FROM Result WHERE category_id = ? and status='activate';`;
   const [result] = await connection.query(Query, params);
+  return result;
+}
+
+async function deleteVotes(connection, params) {
+  const Query = `UPDATE Vote SET status = 'deleted' WHERE user_id = ? and category_id = ? and status='activate';`;
+  const [result] = await connection.query(Query, params);
+  return result;
+}
+
+async function vote(connection, valuesClause) {
+  const Query = `INSERT INTO Vote(user_id, day, sports, category_id, priority) VALUES ${valuesClause};`;
+  const [result] = await connection.query(Query);
   return result;
 }
 
@@ -188,4 +174,5 @@ module.exports = {
   selectVoteCategories,
   postVoteCategory,
   getConfirmedResult,
+  deleteVotes,
 };

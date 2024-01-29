@@ -106,25 +106,19 @@ exports.prepareVoteDataForReport = async function (
   }
 };
 
-exports.selectVoteCategoryWithVoteNameAndGrade = async function (
-  voteName,
-  grade
-) {
-  return await select(Dao.selectVoteCategoryWithVoteNameAndGrade, [
-    voteName,
-    grade,
-  ]);
+exports.selectVoteCategoryWithVoteNameAndGrade = async function (params) {
+  return await select(Dao.selectVoteCategoryWithVoteNameAndGrade, params);
 };
 
 exports.selectVoteCategories = async function (grade, onlyOpened = false) {
   const now = getKSTDateTimeString();
   const params = [grade];
   if (onlyOpened) {
-    params.push(now);
+    params.push(...[now, now]);
   }
   return await select(Dao.selectVoteCategories, params);
 };
 
-exports.getConfirmedResult = async function (categoryId, grade) {
-  return await select(Dao.getConfirmedResult, [categoryId, grade]);
+exports.getConfirmedResult = async function (categoryId) {
+  return await select(Dao.getConfirmedResult, [categoryId]);
 };
