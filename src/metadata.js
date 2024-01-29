@@ -1,5 +1,6 @@
 const Controller = require("./app/Controller");
 const ENDPOINT_METADATA = {
+  /* for user */
   "/app/user-signup": {
     method: "POST",
     tokenRequired: false,
@@ -25,33 +26,46 @@ const ENDPOINT_METADATA = {
     tokenRequired: false,
     next: Controller.sendEmail,
   },
-  "/app/vote": {
-    method: "POST",
-    tokenRequired: true,
-    next: Controller.vote,
-  },
-  "/app/vote-result": {
-    method: "GET",
-    tokenRequired: true,
-    next: Controller.voteResult,
-  },
-  "/app/vote-change": {
-    method: "PATCH",
-    tokenRequired: true,
-    next: Controller.vote,
-    extraData: {
-      edit: true,
-    },
-  },
   "/app/user-info": {
     method: "GET",
     tokenRequired: true,
     next: Controller.userInfo,
   },
+
+  /* for admin */
   "/app/report-vote-result": {
     method: "POST",
     tokenRequired: true,
     next: Controller.sendingEmailResult,
+  },
+  "/app/confirm": {
+    method: "POST",
+    tokenRequired: true,
+    next: Controller.confirm,
+  },
+
+  /* for vote_category */
+  "/app/vote-category": {
+    method: "GET",
+    tokenRequired: true,
+    next: Controller.getVoteCategory,
+  },
+  "/app/open-vote": {
+    method: "POST",
+    tokenRequired: true,
+    next: Controller.postVoteCategory,
+  },
+  "/app/confirmed-result": {
+    method: "GET",
+    tokenRequired: true,
+    next: Controller.getConfirmedResult,
+  },
+
+  /* for vote */
+  "/app/vote": {
+    method: "POST",
+    tokenRequired: true,
+    next: Controller.vote,
   },
 };
 
