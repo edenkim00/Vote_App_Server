@@ -36,7 +36,7 @@ const ENDPOINT_METADATA = {
   "/app/report-vote-result": {
     method: "POST",
     tokenRequired: true,
-    next: Controller.sendingEmailResult,
+    next: Controller.reportAnalysis
   },
   "/app/confirm": {
     method: "POST",

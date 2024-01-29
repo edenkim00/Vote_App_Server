@@ -1,4 +1,4 @@
-require("dotenv").config();
+const { sendEmail, sendingEmailResult } = require("./lib/email");
 const {
   vote,
   voteResult,
@@ -7,7 +7,6 @@ const {
   postVoteCategory,
   getConfirmedResult,
 } = require("./lib/vote");
-const { sendEmail, sendingEmailResult } = require("./lib/email");
 const {
   postUser,
   deleteAccount,
@@ -16,18 +15,20 @@ const {
   changePassword,
 } = require("./lib/user");
 
-exports = {
-  vote,
-  voteResult,
-  confirm,
-  getVoteCategory,
-  postVoteCategory,
-  getConfirmedResult,
-  sendEmail,
-  sendingEmailResult,
-  postUser,
-  deleteAccount,
-  signIn,
-  userInfo,
-  changePassword,
-};
+/* for only admin */
+exports.confirm = confirm;
+exports.getVoteCategory = getVoteCategory;
+exports.postVoteCategory = postVoteCategory;
+
+exports.vote = vote;
+exports.voteResult = voteResult;
+exports.getConfirmedResult = getConfirmedResult;
+
+exports.sendEmail = sendEmail;
+exports.reportAnalysis = sendingEmailResult;
+
+exports.postUser = postUser;
+exports.signIn = signIn;
+exports.deleteAccount = deleteAccount;
+exports.userInfo = userInfo;
+exports.changePassword = changePassword;
