@@ -112,7 +112,7 @@ exports.selectVoteCategoryWithVoteNameAndGrade = async function (params) {
 
 exports.selectVoteCategories = async function (grade, forAdmin = false) {
   if (forAdmin) {
-    return await select(Dao.selectVoteCategories, [grade]);
+    return await select(Dao.selectVoteCategories, []);
   }
   const now = getKSTDateTimeString();
   return await select(Dao.selectVoteCategories, [grade, now, now]);
