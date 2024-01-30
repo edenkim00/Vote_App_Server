@@ -17,21 +17,11 @@ const {
   changePassword,
 } = require("./src/app/Controller.js");
 
-const test = confirm;
+const test = signIn;
 const userId = 1;
 const data = {
-  category_id: 1,
-  force: true,
-  confirmed_data: {
-    Mon: "Basketball",
-    Tue: "Basketball",
-    Wed: "Basketball",
-    Thu: "Basketball",
-    Fri1: "Basketball",
-    Fri2: "Basketball",
-    Sat1: "Netball",
-    Sat2: "Netball",
-  },
+  email: "eotjd0986@gmail.com",
+  password: "qawsed0986",
 };
 // const data = {
 //   category_id: 1,

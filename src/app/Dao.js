@@ -25,7 +25,7 @@ async function changePassword(connection, params) {
 }
 
 async function isUserExist(connection, params) {
-  const Query = `SELECT id, sex, graduationYear from User WHERE email=? and password=? and status='activate';`;
+  const Query = `SELECT * from User WHERE email=? and password=? and status='activate';`;
   const [result] = await connection.query(Query, params);
   return result;
 }

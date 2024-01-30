@@ -107,6 +107,12 @@ function getKSTDateTimeString() {
   return `${year}-${month}-${day}`;
 }
 
+const pick = (obj, keys) =>
+  keys.reduce((acc, key) => {
+    if (obj && obj[key]) acc[key] = obj[key];
+    return acc;
+  }, {});
+
 module.exports = {
   toGrade,
   getFullGradeFromGraduationYear,
@@ -116,4 +122,5 @@ module.exports = {
   isValidConfirmedResult,
   getKSTDateTimeString,
   getGrades,
+  pick,
 };

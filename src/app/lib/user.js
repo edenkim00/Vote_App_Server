@@ -6,7 +6,7 @@ const { response, errResponse } = require("../../../config/response");
 const hmacSHA512 = require("crypto-js/hmac-sha512");
 const jwt = require("jsonwebtoken");
 var Base64 = require("crypto-js/enc-base64");
-const { toGrade } = require("../utils/util");
+const { toGrade, pick } = require("../utils/util");
 require("dotenv").config();
 
 exports.postUser = async function (data) {
@@ -75,12 +75,10 @@ exports.changePassword = async function (data) {
 exports.signIn = async function (data) {
   const { email, password } = data;
 
-  // 1001 : 바디에 빈 값이 있음.
   if (email == null || password == null) {
     return errResponse(baseResponse.WRONG_BODY);
   }
 
-  // db에는 암호화된 형식으로 저장되어 있기 때문에 password 암호화해서! 물어봐야됨.
   const encodedPassword = Base64.stringify(
     hmacSHA512(password, process.env.PASSWORD_HASHING_NAMESPACE)
   );
@@ -94,7 +92,6 @@ exports.signIn = async function (data) {
     return errResponse(baseResponse.NOT_EXIST_USER);
   }
   const userId = loginResult[0].id;
-  const graduationYear = loginResult[0].graduationYear;
   const token = jwt.sign(
     {
       userId: userId,
@@ -107,10 +104,11 @@ exports.signIn = async function (data) {
   );
 
   const result = {
+    ...pick(loginResult[0], ["email", "name", "graduationYear", "sex"]),
     userId: userId,
     jwtToken: token,
-    graduationYear: graduationYear,
   };
+
   return response(baseResponse.SUCCESS, result);
 };
 
