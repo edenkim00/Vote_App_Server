@@ -64,6 +64,9 @@ function getFullGradeFromGraduationYear(graduationYear) {
 }
 
 function toGrade(graduationYear) {
+  if (!graduationYear) {
+    return undefined;
+  }
   return getFullGradeFromGraduationYear(graduationYear) > 9 ? "HS" : "MS";
 }
 

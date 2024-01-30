@@ -103,10 +103,18 @@ exports.signIn = async function (data) {
     } // 유효 기간 365일
   );
 
+  const graduationYear = loginResult[0]?.graduationYear;
+  const grade = toGrade(graduationYear);
+  if (!graduationYear || !grade) {
+    console.log("graduationYear is null");
+    return errResponse(baseResponse.NOT_EXIST_USER);
+  }
+
   const result = {
     ...pick(loginResult[0], ["email", "name", "graduationYear", "sex"]),
-    userId: userId,
     jwtToken: token,
+    userId,
+    grade,
   };
 
   return response(baseResponse.SUCCESS, result);
