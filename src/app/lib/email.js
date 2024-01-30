@@ -19,6 +19,7 @@ exports.sendEmail = async function (data) {
   }
 
   let authNum = Math.random().toString().substring(2, 8);
+  console.log(authNum);
   // 7001
   if (email == null || email == "") return response(baseResponse.WRONG_BODY);
   const mailPoster = nodemailer.createTransport(
