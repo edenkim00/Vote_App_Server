@@ -13,7 +13,7 @@ const {
 
 const CSV_TABLES = [
   {
-    name: "Voting Results (Point: 3 * Priority 1 count + 2 * Priority 2 count)",
+    name: "Voting Results (Point (priority 1 | priority 2)), Weights For Priority: 3,2",
     filter: () => true,
     rows: () => DAYS_AVAILABLE,
     columns: SPORTS_AVAILABLE,
@@ -55,7 +55,7 @@ const CSV_TABLES = [
     },
   },
   {
-    name: "Analysis By Gender (Count)",
+    name: "Analysis By Gender (Count, only priority 1)",
     filter: (row) => row.priority == 1,
     rows: () => GENDERS,
     columns: SPORTS_AVAILABLE,
@@ -70,7 +70,7 @@ const CSV_TABLES = [
     },
   },
   {
-    name: "Analysis By GraduationYear (Count)",
+    name: "Analysis By GraduationYear (Count, only priority 1)",
     filter: (row) => row.priority == 1,
     rows: (grade) => getGrades(grade).map((g) => g.toString()),
     columns: SPORTS_AVAILABLE,
