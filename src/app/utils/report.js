@@ -81,7 +81,6 @@ const CSV_TABLES = [
       const grade = getFullGradeFromGraduationYear(graduationYear);
       const column = vote[columnKey];
       const count = vote.vote_counts ?? 0;
-      console.log(acc);
       if (!acc[grade]) acc[grade] = {};
       acc[grade][column] = (acc[grade][column] ?? 0) + parseInt(count);
     },
@@ -106,7 +105,6 @@ async function generateCsv(categoryId) {
     csv.push(["", ...table.columns]);
 
     const grade = insepctGrade(dataFromDB);
-    console.log("GRADE", grade);
     if (!grade) {
       throw new Error("Failed to inspect grade from vote data");
     }
