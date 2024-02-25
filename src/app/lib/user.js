@@ -45,7 +45,13 @@ exports.postUser = async function (data) {
     hmacSHA512(password, process.env.PASSWORD_HASHING_NAMESPACE)
   );
 
-  const queryParams = [email, encodedPassword, name, graduationYear, sex];
+  const queryParams = [
+    email,
+    encodedPassword,
+    name,
+    graduationYear,
+    sex || "Rather not say",
+  ];
   await Service.postUser(queryParams);
   return response(baseResponse.SUCCESS);
 };

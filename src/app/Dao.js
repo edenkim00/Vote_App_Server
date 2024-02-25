@@ -80,30 +80,26 @@ async function getAdminVotingResult(connection, params) {
   return result;
 }
 
-async function getReportDetailData(connection, params) {
-  const Query = `
-  SELECT V.sport, U.${params[3]}, count(*) AS vote_counts FROM Voting V
-    INNER JOIN User U ON V.user_id = U.id AND U.status = 'activate'
-  WHERE V.year = ${params[0]} and V.month = ${params[1]} and V.grade = '${params[2]}' and V.priority = 1 and V.status='activate' and V.is_admin=false
-  GROUP BY V.sport, U.${params[3]};
-  `;
-  const [result] = await connection.query(Query, params);
-  return result;
-}
-
 async function getReportData(connection, params) {
   const Query = `
-  SELECT V.day, V.sport, V.priority, count(*) AS vote_counts FROM Voting V
-  WHERE year = ${params[0]} and month = ${params[1]} and grade = '${params[2]}' and status='activate' AND is_admin=false
-  GROUP BY V.day, V.sport, V.priority
+  SELECT V.day, V.sports, V.priority, U.graduationYear AS graduation_year, U.sex AS gender, count(*) AS vote_counts FROM Vote V
+    INNER JOIN User U ON V.user_id = U.id AND U.status = 'activate'
+  WHERE V.category_id = ? and V.status='activate'
+  GROUP BY V.day, V.sports, V.priority, U.graduationYear, U.sex;
   `;
-  const [result] = await connection.query(Query);
+  const [result] = await connection.query(Query, params);
   return result;
 }
 
 async function deleteConfirmedData(connection, params) {
   const Query = `UPDATE Result SET status = 'deleted' WHERE category_id = ? and status='activate';`;
   const [result] = await connection.query(Query, params);
+  return result;
+}
+
+async function selectVoteCategory(connection, categoryId) {
+  const Query = `SELECT * FROM VoteCategory WHERE id = ? and status='activate';`;
+  const [result] = await connection.query(Query, categoryId);
   return result;
 }
 
@@ -168,7 +164,6 @@ module.exports = {
   getAdminResult,
   getAdminVotingResult,
   getReportData,
-  getReportDetailData,
   deleteAccount,
   deleteConfirmedData,
   confirm,
@@ -177,4 +172,5 @@ module.exports = {
   postVoteCategory,
   getConfirmedResult,
   deleteVotes,
+  selectVoteCategory,
 };
