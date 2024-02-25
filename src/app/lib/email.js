@@ -114,6 +114,6 @@ exports.sendingEmailResult = async function (data, verifiedToken) {
     console.error("Email sending to admin: ", err);
     return errResponse(baseResponse.EMAIL_SEND_ERROR);
   }
-
+  console.log("Email sent to admin");
   return response(baseResponse.SUCCESS);
 };
