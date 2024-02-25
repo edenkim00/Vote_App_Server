@@ -13,7 +13,7 @@ const {
 
 const CSV_TABLES = [
   {
-    name: "Voting Results, (Point | (priority 1 coutn | priority 2 count)), Weights For Priority: 3, 2",
+    name: "Voting Results, (Point | (priority 1 count | priority 2 count)), Weights For Priority: 3, 2",
     filter: () => true,
     rows: () => DAYS_AVAILABLE,
     columns: SPORTS_AVAILABLE,
