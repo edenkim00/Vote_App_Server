@@ -104,7 +104,7 @@ exports.sendingEmailResult = async function (data, verifiedToken) {
         console.log("Email sent: " + info.response);
       }
 
-      fs.unlinkSync(path);
+      fs.unlinkSync(csvPath);
       resolve();
     });
   });

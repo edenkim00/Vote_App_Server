@@ -9,7 +9,6 @@ const {
 
   sendEmail,
   reportAnalysis,
-
   postUser,
   signIn,
   deleteAccount,
@@ -17,11 +16,11 @@ const {
   changePassword,
 } = require("./src/app/Controller.js");
 
-const test = signIn;
+const test = reportAnalysis;
 const userId = 1;
 const data = {
   email: "eotjd0986@gmail.com",
-  password: "qawsed0986",
+  category_id: "1",
 };
 // const data = {
 //   category_id: 1,
