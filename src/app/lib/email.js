@@ -5,8 +5,8 @@ const nodemailer = require("nodemailer");
 var smtpTransport = require("nodemailer-smtp-transport");
 const fs = require("fs");
 const path = require("path");
-const csvFilePath = (grade) => path.join("/tmp", `data_${grade}.csv`);
-const CSVGenerator = require("../utils/CsvGenerator");
+
+const { generateCsv } = require("../utils/report");
 require("dotenv").config();
 
 exports.sendEmail = async function (data) {
@@ -57,24 +57,30 @@ exports.sendingEmailResult = async function (data, verifiedToken) {
   if (userId != 1) {
     return errResponse(baseResponse.TOKEN_ERROR);
   }
-  const { email, year, month } = data;
-  if (!(email && year && month)) {
+  const { email, category_id } = data;
+  if (!(email && category_id)) {
     return errResponse(baseResponse.WRONG_BODY);
   }
-  const GRADES = ["MS", "HS"];
-  const attachments = [];
-  for (const grade of GRADES) {
-    const csvRawString = await CSVGenerator.generate(year, month, grade);
-    if (!csvRawString) {
-      return errResponse(baseResponse.SERVER_ISSUE);
-    }
-    const path = csvFilePath(grade);
-    fs.writeFileSync(path, csvRawString);
-    attachments.push({
-      filename: `${year}_${month}_Voting_Result_${grade}.csv`,
-      path: path,
-    });
+  const categoryInfo = await Provider.selectVoteCategory(category_id);
+  if (!categoryInfo?.length) {
+    return errResponse(baseResponse.WRONG_BODY);
   }
+  const category = categoryInfo[0];
+  const categoryName = category.name;
+
+  const attachments = [];
+  const csvRawString = await generateCsv(category_id);
+  if (!csvRawString) {
+    return errResponse(baseResponse.SERVER_ISSUE);
+  }
+  const csvPath = path.join("/tmp", `data.csv`);
+  fs.writeFileSync(csvPath, csvRawString);
+
+  attachments.push({
+    filename: `Voting_Result.csv`, //TODO:
+    path: csvPath,
+  });
+
   const transporter = nodemailer.createTransport({
     service: "Gmail",
     auth: {
@@ -86,7 +92,7 @@ exports.sendingEmailResult = async function (data, verifiedToken) {
   const mailOptions = {
     from: "nlcsjejusportshall@gmail.com",
     to: data.email,
-    subject: `${year}.${month} Sports Hall Vote Result`,
+    subject: `Sports Hall Vote Result (${categoryName})`,
     text: "",
     attachments: attachments,
   };

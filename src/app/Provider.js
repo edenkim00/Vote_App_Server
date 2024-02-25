@@ -67,43 +67,17 @@ async function getAdminVoteResult(year, month, grade) {
   }
 }
 
-exports.prepareVoteDataForReport = async function (
-  tableInfo,
-  year,
-  month,
-  grade
-) {
+exports.prepareVoteDataForReport = async function (categoryId) {
   try {
     const connection = await pool.getConnection(async (conn) => conn);
-    const dataFromDB = await tableInfo.getDataFromDB(
-      connection,
-      year,
-      month,
-      grade
-    );
-    connection.release();
-
-    const data = Object.fromEntries(
-      tableInfo
-        .key(grade)
-        .map((k) => [
-          k,
-          Object.fromEntries(
-            tableInfo.columns.map((c) => [
-              c,
-              JSON.parse(JSON.stringify(tableInfo.initialValue)),
-            ])
-          ),
-        ])
-    );
-    for (const raw of dataFromDB) {
-      tableInfo.processRawData(raw, data);
-    }
-
+    const data = await Dao.getReportData(connection, [categoryId]);
     return data;
   } catch (err) {
     console.error("[prepareVoteDataForReport]", err);
   }
+};
+exports.selectVoteCategory = async function (params) {
+  return await select(Dao.selectVoteCategory, params);
 };
 
 exports.selectVoteCategoryWithVoteNameAndGrade = async function (params) {

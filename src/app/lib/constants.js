@@ -19,6 +19,7 @@ const SPORTS_AVAILABLE = [
 ];
 const WEIGHTS_FOR_VOTE_BY_PRIORITY = [3, 2];
 const GRADES = ["HS", "MS"];
+const GENDERS = ["Male", "Female", "Rather not say"];
 
 module.exports = {
   DAYS_AVAILABLE,
@@ -26,4 +27,5 @@ module.exports = {
   WEIGHTS_FOR_VOTE_BY_PRIORITY,
   GRADES,
   NOT_SELECTED,
+  GENDERS,
 };
