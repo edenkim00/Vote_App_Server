@@ -13,7 +13,8 @@ const {
 
 const CSV_TABLES = [
   {
-    name: "Voting Results, (Point | (priority 1 count | priority 2 count)), (Point = priority 1 count * 3 + priority 2 count * 2)",
+    header:
+      "Voting Results, (Point | (priority 1 count | priority 2 count)), (Point = priority 1 count * 3 + priority 2 count * 2)",
     filter: () => true,
     rows: () => DAYS_AVAILABLE,
     columns: SPORTS_AVAILABLE,
@@ -55,7 +56,7 @@ const CSV_TABLES = [
     },
   },
   {
-    name: "Analysis By Gender, (Counted only priority 1 votes)",
+    header: "Analysis By Gender, (Counted only priority 1 votes)",
     filter: (row) => row.priority == 1,
     rows: () => GENDERS,
     columns: SPORTS_AVAILABLE,
@@ -70,7 +71,7 @@ const CSV_TABLES = [
     },
   },
   {
-    name: "Analysis By Grade, (Counted only priority 1 votes)",
+    header: "Analysis By Grade, (Counted only priority 1 votes)",
     filter: (row) => row.priority == 1,
     rows: (grade) => getGrades(grade).map((g) => g.toString()),
     columns: SPORTS_AVAILABLE,
@@ -101,7 +102,7 @@ async function generateCsv(categoryId) {
   const dataFromDB = await prepareVoteDataForReport(categoryId);
 
   for (const table of CSV_TABLES) {
-    csv.push([`${table.name}`]);
+    csv.push([`${table.header}`]);
     csv.push(["", ...table.columns]);
 
     const grade = insepctGrade(dataFromDB);
