@@ -77,7 +77,7 @@ exports.sendingEmailResult = async function (data, verifiedToken) {
   fs.writeFileSync(csvPath, csvRawString);
 
   attachments.push({
-    filename: `Voting_Result.csv`, //TODO:
+    filename: `${categoryName}_Voting_Result.csv`, //TODO:
     path: csvPath,
   });
 
