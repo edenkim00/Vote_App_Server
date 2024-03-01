@@ -67,9 +67,10 @@ exports.sendingEmailResult = async function (data, verifiedToken) {
   }
   const category = categoryInfo[0];
   const categoryName = category.name;
+  const categoryGrade = category.grade;
 
   const attachments = [];
-  const csvRawString = await generateCsv(category_id);
+  const csvRawString = await generateCsv(category_id, categoryGrade);
   if (!csvRawString) {
     return errResponse(baseResponse.SERVER_ISSUE);
   }

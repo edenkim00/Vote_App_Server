@@ -96,21 +96,16 @@ function insepctGrade(rows) {
   }
   return undefined;
 }
-
-async function generateCsv(categoryId) {
+async function generateCsv(categoryId, grade) {
   let csv = [];
   const dataFromDB = await prepareVoteDataForReport(categoryId);
 
   for (const table of CSV_TABLES) {
     csv.push([`${table.header}`]);
     csv.push(["", ...table.columns]);
-
-    const grade = insepctGrade(dataFromDB);
     if (!grade) {
-      console.log(dataFromDB[0], dataFromDB[1], dataFromDB.length);
-      throw new Error("Failed to inspect grade from vote data");
+      throw Error("Fail to inspect grade.");
     }
-
     const filtered = dataFromDB.filter(table.filter);
     const { rowKey, columnKey } = table;
     let currentTable = {};
