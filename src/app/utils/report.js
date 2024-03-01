@@ -107,6 +107,7 @@ async function generateCsv(categoryId) {
 
     const grade = insepctGrade(dataFromDB);
     if (!grade) {
+      console.log(dataFromDB[0], dataFromDB[1], dataFromDB.length);
       throw new Error("Failed to inspect grade from vote data");
     }
 
