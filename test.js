@@ -16,11 +16,13 @@ const {
   changePassword,
 } = require("./src/app/Controller.js");
 
-const test = reportAnalysis;
+const test = postVoteCategory;
 const userId = 1;
 const data = {
-  email: "eotjd0986@gmail.com",
-  category_id: "1",
+  vote_name: "",
+  grade: "",
+  opened_dt: "",
+  deadline: "",
 };
 // const data = {
 //   category_id: 1,
