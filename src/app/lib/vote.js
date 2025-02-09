@@ -120,11 +120,16 @@ exports.getVoteCategories = async function (data, verifiedToken) {
 };
 
 exports.getConfirmedResult = async function (data) {
-  const { category_id } = data;
+  const { category_id, version } = data;
   if (!category_id) {
     return errResponse(baseResponse.WRONG_BODY);
   }
-  const result = await Provider.getConfirmedResult(category_id);
+
+  const result = version
+    ? await Provider.getConfirmedResult2(category_id)
+    : await Provider.getConfirmedResult(category_id);
+
+  // const result = await Provider.getConfirmedResult(category_id);
 
   if (!result) {
     return errResponse(baseResponse.SERVER_ISSUE);

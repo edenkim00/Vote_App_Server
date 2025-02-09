@@ -16,13 +16,11 @@ const {
   changePassword,
 } = require("./src/app/Controller.js");
 
-const test = postVoteCategory;
+const test = getConfirmedResult;
 const userId = 1;
 const data = {
-  vote_name: "",
-  grade: "",
-  opened_dt: "",
-  deadline: "",
+  category_id: 12,
+  version: "2",
 };
 // const data = {
 //   category_id: 1,

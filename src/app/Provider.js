@@ -2,6 +2,7 @@ const { pool } = require("../../config/database");
 const Dao = require("./Dao");
 const { DAYS_AVAILABLE } = require("./lib/constants");
 const { getKSTDateTimeString } = require("./utils/util");
+const _ = require("lodash");
 
 async function select(f, params) {
   try {
@@ -107,4 +108,41 @@ exports.getConfirmedResult = async function (categoryId) {
       data.filter((r) => r.day === d).map((r) => r.sports)[0] ?? undefined,
     ])
   );
+};
+
+exports.getConfirmedResult2 = async function (categoryId) {
+  const data = await select(Dao.getConfirmedResult, [categoryId]);
+  if (!data) {
+    return undefined;
+  }
+  if (!data.length) {
+    return [];
+  }
+  const groupedByDay = _.groupBy(data, "day");
+  const daySorted = _.mapValues(groupedByDay, (dayResults) =>
+    _.sortBy(
+      dayResults.map((r) => ({
+        sports: r.sports,
+        priority: r.priority,
+      })),
+      "priority"
+    )
+  );
+
+  const dayResult = {};
+  for (const day of DAYS_AVAILABLE) {
+    if (!daySorted[day]) {
+      dayResult[day] = {
+        1: undefined,
+        2: undefined,
+      };
+    } else {
+      dayResult[day] = {
+        1: daySorted[day][0]?.sports ?? undefined,
+        2: daySorted[day][1]?.sports ?? undefined,
+      };
+    }
+  }
+
+  return dayResult;
 };
