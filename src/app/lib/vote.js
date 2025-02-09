@@ -43,13 +43,14 @@ exports.confirm = async function (data, verifiedToken) {
   if (!isAdmin(userId)) {
     return errResponse(baseResponse.TOKEN_ERROR);
   }
-  const { category_id, force, confirmed_data } = data;
+  const { category_id, force, confirmed_data, version } = data;
   if (!(category_id && confirmed_data)) {
     return errResponse(baseResponse.WRONG_BODY);
   }
-  if (!isValidConfirmedResult(confirmed_data)) {
+  if (!isValidConfirmedResult(confirmed_data, version)) {
     return errResponse(baseResponse.WRONG_BODY);
   }
+
   if (!force) {
     const exist = await Provider.getConfirmedResult(category_id);
     if (exist && Object.keys(exist).length > 0) {

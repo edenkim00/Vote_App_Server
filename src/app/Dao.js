@@ -109,6 +109,12 @@ async function confirm(connection, valuesClause) {
   return result;
 }
 
+async function confirm2(connection, valuesClause) {
+  const Query = `INSERT INTO Result(category_id, day, sports, priority) VALUES ${valuesClause};`;
+  const [result] = await connection.query(Query);
+  return result;
+}
+
 async function selectVoteCategoryWithVoteNameAndGrade(connection, params) {
   const Query = `SELECT * FROM VoteCategory WHERE name = ? and grade = ? and status='activate';`;
   const [result] = await connection.query(Query, params);
@@ -173,4 +179,5 @@ module.exports = {
   getConfirmedResult,
   deleteVotes,
   selectVoteCategory,
+  confirm2,
 };

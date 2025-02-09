@@ -82,7 +82,27 @@ function isAdmin(userId) {
   return userId == 1;
 }
 
-function isValidConfirmedResult(confirmed) {
+function isValidConfirmedResult(confirmed, version = "v1") {
+  if (version !== "v1") {
+    if (
+      !DAYS_AVAILABLE.every(
+        (day) => !!confirmed[day]["1"] && !!confirmed[day]["2"]
+      )
+    ) {
+      return false;
+    }
+    if (
+      !Object.values(confirmed).every(
+        (sports) =>
+          SPORTS_AVAILABLE.includes(sports["1"]) &&
+          SPORTS_AVAILABLE.includes(sports["2"])
+      )
+    ) {
+      return false;
+    }
+    return true;
+  }
+
   if (!DAYS_AVAILABLE.every((day) => !!confirmed[day])) {
     return false;
   }

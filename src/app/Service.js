@@ -90,6 +90,29 @@ exports.confirm = async function (categoryId, confirmedData, force = false) {
   }
 };
 
+exports.confirm2 = async function (categoryId, confirmedData, force = false) {
+  const toValues = (entry) =>
+    `(${categoryId}, '${entry[0]}', '${entry[1][1]}', 1),
+    (${categoryId}, '${entry[0]}', '${entry[1][2]}', 2)
+  `;
+  const connection = await pool.getConnection(async (conn) => conn);
+  try {
+    connection.beginTransaction();
+    if (force) {
+      await Dao.deleteConfirmedData(connection, [categoryId]);
+    }
+    const valuesClause = Object.entries(confirmedData).map(toValues).join(", ");
+    await Dao.confirm2(connection, valuesClause);
+    connection.commit();
+    return true;
+  } catch (err) {
+    connection.rollback();
+    console.error("[Confirm]", err);
+  } finally {
+    connection.release();
+  }
+};
+
 exports.postVoteCategory = async function (params) {
   const connection = await pool.getConnection(async (conn) => conn);
   try {

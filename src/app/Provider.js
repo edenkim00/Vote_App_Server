@@ -123,7 +123,7 @@ exports.getConfirmedResult2 = async function (categoryId) {
     _.sortBy(
       dayResults.map((r) => ({
         sports: r.sports,
-        priority: r.priority,
+        priority: r.priority ?? 0,
       })),
       "priority"
     )
