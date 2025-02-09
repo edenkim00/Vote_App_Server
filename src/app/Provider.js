@@ -105,7 +105,9 @@ exports.getConfirmedResult = async function (categoryId) {
   return Object.fromEntries(
     DAYS_AVAILABLE.map((d) => [
       d,
-      data.filter((r) => r.day === d).map((r) => r.sports)[0] ?? undefined,
+      data
+        .filter((r) => r.day === d && (r.priority ?? 1) === 1)
+        .map((r) => r.sports)[0] ?? undefined,
     ])
   );
 };
