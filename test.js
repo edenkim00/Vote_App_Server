@@ -16,26 +16,26 @@ const {
   changePassword,
 } = require("./src/app/Controller.js");
 
-const test = getConfirmedResult;
+const test = confirm;
 const userId = 1;
-const data = {
-  category_id: 12,
-  version: "2",
-};
 // const data = {
-//   category_id: 1,
-//   force: true,
-//   vote_data: {
-//     Mon: ["None", "None"],
-//     Tue: ["Basketball", "Badminton"],
-//     Wed: ["Basketball", "Badminton"],
-//     Thu: ["Basketball", "Badminton"],
-//     Fri1: ["Basketball", "Badminton"],
-//     Fri2: ["Basketball", "Badminton"],
-//     Sat1: ["Basketball", "Badminton"],
-//     Sat2: ["Basketball", "Badminton"],
-//   },
+//   category_id: 12,
+//   version: "2",
 // };
+const data = {
+  category_id: 14,
+  confirmed_data: {
+    Mon: ["Basketball", "Badminton"],
+    Tue: ["Volleyball", "Basketball"],
+    Wed: ["Basketball", "Netball"],
+    Thu: ["Basketball", "Volleyball"],
+    Fri1: ["Basketball", "Netball"],
+    Fri2: ["Volleyball", "Basketball"],
+    Sat1: ["Volleyball", "Badminton"],
+    Sat2: ["Basketball", "Badminton"],
+  },
+  version: "v2",
+};
 
 test(data, { userId }).then((res) => {
   console.log(res);

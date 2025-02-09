@@ -92,8 +92,8 @@ exports.confirm = async function (categoryId, confirmedData, force = false) {
 
 exports.confirm2 = async function (categoryId, confirmedData, force = false) {
   const toValues = (entry) =>
-    `(${categoryId}, '${entry[0]}', '${entry[1][1]}', 1),
-    (${categoryId}, '${entry[0]}', '${entry[1][2]}', 2)
+    `(${categoryId}, '${entry[0]}', '${entry[1][0]}', 1),
+    (${categoryId}, '${entry[0]}', '${entry[1][1]}', 2)
   `;
   const connection = await pool.getConnection(async (conn) => conn);
   try {

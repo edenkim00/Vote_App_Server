@@ -58,7 +58,11 @@ exports.confirm = async function (data, verifiedToken) {
     }
   }
 
-  const result = await Service.confirm(category_id, confirmed_data, force);
+  const result =
+    version === "v2"
+      ? await Service.confirm2(category_id, confirmed_data, force)
+      : await Service.confirm(category_id, confirmed_data, force);
+
   if (!result) {
     return errResponse(baseResponse.SERVER_ISSUE);
   }
