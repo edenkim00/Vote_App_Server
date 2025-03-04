@@ -1,5 +1,6 @@
 const { pool } = require("../../config/database");
 const Dao = require("./Dao");
+const { getKSTDateTimeString } = require("./utils/util");
 
 exports.postUser = async function (params) {
   const connection = await pool.getConnection(async (conn) => conn);
@@ -51,6 +52,19 @@ exports.changePassword = async function (params) {
 exports.vote = async function (userId, categoryId, voteData, force = false) {
   const connection = await pool.getConnection(async (conn) => conn);
   try {
+    /* test */
+    const vote = await Dao.selectVoteCategory(connection, categoryId);
+    if (vote.length === 0) {
+      return false;
+    }
+    const deadline = vote[0].deadline;
+    const nowDt = getKSTDateTimeString();
+
+    if (nowDt > deadline) {
+      return false;
+    }
+    /* test */
+
     const toValues = ([day, sports]) =>
       `(${userId}, '${day}', '${sports[0]}', ${categoryId}, 1), (${userId}, '${day}', '${sports[1]}', ${categoryId}, 2)`;
     connection.beginTransaction();
