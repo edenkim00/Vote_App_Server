@@ -71,14 +71,8 @@ const ENDPOINT_METADATA = {
   /* for sports */
   "/app/sports": {
     method: "GET",
-    tokenRequired: true,
+    tokenRequired: false,
     next: Controller.getSports,
-  },
-
-  "/app/register-sports": {
-    method: "POST",
-    tokenRequired: true,
-    next: Controller.postSports,
   },
 };
 
