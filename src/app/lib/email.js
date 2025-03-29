@@ -7,6 +7,7 @@ const fs = require("fs");
 const path = require("path");
 
 const { generateCsv } = require("../utils/report");
+const SportsManager = require("./SportsManager");
 require("dotenv").config();
 async function sendEmailWithCommonSender(data) {
   const { email, appName } = data;
@@ -114,10 +115,17 @@ exports.sendingEmailResult = async function (data, verifiedToken) {
   const categoryGrade = category.grade;
 
   const attachments = [];
-  const csvRawString = await generateCsv(category_id, categoryGrade);
+  const sportsList = await SportsManager.getSports();
+  const csvRawString = await generateCsv(
+    category_id,
+    categoryGrade,
+    sportsList
+  );
+
   if (!csvRawString) {
     return errResponse(baseResponse.SERVER_ISSUE);
   }
+
   const csvPath = path.join("/tmp", `data.csv`);
   fs.writeFileSync(csvPath, csvRawString);
 
