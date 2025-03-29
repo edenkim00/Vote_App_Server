@@ -87,6 +87,7 @@ function getCsvTable(sportsList) {
 
 async function generateCsv(categoryId, grade, sportsList) {
   const CSV_TABLES = getCsvTable(sportsList);
+  console.log("CSV_TABLES", CSV_TABLES);
   let csv = [];
   const dataFromDB = await prepareVoteDataForReport(categoryId);
 
