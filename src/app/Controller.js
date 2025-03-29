@@ -13,6 +13,7 @@ const {
   userInfo,
   changePassword,
 } = require("./lib/user");
+const { getSports } = require("./lib/sports");
 
 /* for only admin */
 exports.confirm = confirm;
@@ -30,3 +31,4 @@ exports.signIn = signIn;
 exports.deleteAccount = deleteAccount;
 exports.userInfo = userInfo;
 exports.changePassword = changePassword;
+exports.getSports = getSports;

@@ -1,9 +1,4 @@
-const {
-  DAYS_AVAILABLE,
-  SPORTS_AVAILABLE,
-  WEIGHTS_FOR_VOTE_BY_PRIORITY,
-  NOT_SELECTED,
-} = require("../lib/constants");
+const { DAYS_AVAILABLE, NOT_SELECTED } = require("../lib/constants");
 
 function isValidVoteData(voteData) {
   if (!voteData || !Object.keys(voteData).length) {
@@ -19,42 +14,8 @@ function isValidVoteData(voteData) {
     ) {
       return false;
     }
-    if (!voteData[day].every((sport) => SPORTS_AVAILABLE.includes(sport))) {
-      return false;
-    }
   }
   return true;
-}
-
-function processVoteResult(voteResults) {
-  const voteData = Object.fromEntries(
-    DAYS_AVAILABLE.map((d) => [
-      d,
-      Object.fromEntries(SPORTS_AVAILABLE.map((s) => [s, 0])),
-    ])
-  );
-  if (!voteResults || !voteResults[0]) {
-    return voteData;
-  }
-  for (const voteResult of voteResults[0]) {
-    const { day, sport, vote_counts, priority } = voteResult;
-    if (!(day && sport && vote_counts && priority)) {
-      console.error("Invalid vote result", voteResults[0]);
-      continue;
-    }
-    voteData[day][sport] +=
-      parseInt(vote_counts) * WEIGHTS_FOR_VOTE_BY_PRIORITY[priority - 1];
-  }
-
-  return Object.fromEntries(
-    Object.entries(voteData).map(([day, data]) => [day, getOrderedResult(data)])
-  );
-}
-
-function getOrderedResult(result) {
-  const entries = Object.entries(result);
-  entries.sort((a, b) => b[1] - a[1]);
-  return Object.fromEntries(entries.map((e, i) => [i + 1, e[0]]));
 }
 
 function getFullGradeFromGraduationYear(graduationYear) {
@@ -89,28 +50,14 @@ function isValidConfirmedResult(confirmed, version = "v2") {
     ) {
       return false;
     }
-    if (
-      !Object.values(confirmed).every(
-        (sports) =>
-          SPORTS_AVAILABLE.includes(sports[0]) &&
-          SPORTS_AVAILABLE.includes(sports[1])
-      )
-    ) {
-      return false;
-    }
+
     return true;
   }
 
   if (!DAYS_AVAILABLE.every((day) => !!confirmed[day])) {
     return false;
   }
-  if (
-    !Object.values(confirmed).every((sports) =>
-      SPORTS_AVAILABLE.includes(sports)
-    )
-  ) {
-    return false;
-  }
+
   return true;
 }
 
@@ -138,7 +85,6 @@ module.exports = {
   toGrade,
   getFullGradeFromGraduationYear,
   isValidVoteData,
-  processVoteResult,
   isAdmin,
   isValidConfirmedResult,
   getKSTDateTimeString,

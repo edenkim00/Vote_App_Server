@@ -156,6 +156,12 @@ async function vote(connection, valuesClause) {
   return result;
 }
 
+async function fetchSports(connection) {
+  const Query = `SELECT * FROM Sports WHERE status = 'activate';`;
+  const [result] = await connection.query(Query);
+  return result;
+}
+
 module.exports = {
   getUserByEmail,
   postUser,
@@ -181,4 +187,5 @@ module.exports = {
   deleteVotes,
   selectVoteCategory,
   confirm2,
+  fetchSports,
 };

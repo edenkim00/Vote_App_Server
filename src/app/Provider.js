@@ -148,3 +148,7 @@ exports.getConfirmedResult2 = async function (categoryId) {
 
   return dayResult;
 };
+
+exports.fetchSports = async function () {
+  return await select(Dao.fetchSports, []);
+};

@@ -14,9 +14,10 @@ const {
   deleteAccount,
   userInfo,
   changePassword,
+  getSports,
 } = require("./src/app/Controller.js");
 
-const test = confirm;
+const test = getSports;
 const userId = 1;
 // const data = {
 //   category_id: 12,

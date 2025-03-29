@@ -67,6 +67,19 @@ const ENDPOINT_METADATA = {
     tokenRequired: true,
     next: Controller.vote,
   },
+
+  /* for sports */
+  "/app/sports": {
+    method: "GET",
+    tokenRequired: true,
+    next: Controller.getSports,
+  },
+
+  "/app/register-sports": {
+    method: "POST",
+    tokenRequired: true,
+    next: Controller.postSports,
+  },
 };
 
 module.exports = {
