@@ -10,12 +10,14 @@ const DEFAULT_SPORTS_AVAILABLE = [
 ];
 
 class SportsManager {
-  async getSports() {
+  async getSports(isAdmin = false) {
     if (!this.sports) {
       this.sports = await this.fetchSports();
     }
 
-    return this.sports ?? DEFAULT_SPORTS_AVAILABLE;
+    return (this.sports ?? DEFAULT_SPORTS_AVAILABLE).filter(
+      (x) => Boolean(x.admin) === isAdmin
+    );
   }
 
   static async getSports() {

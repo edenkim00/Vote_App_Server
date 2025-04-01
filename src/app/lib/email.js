@@ -115,7 +115,7 @@ exports.sendingEmailResult = async function (data, verifiedToken) {
   const categoryGrade = category.grade;
 
   const attachments = [];
-  const sportsList = (await SportsManager.getSports()).filter(
+  const sportsList = (await SportsManager.getSports(false)).filter(
     (x) => x.admin == false
   );
 
