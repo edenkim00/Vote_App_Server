@@ -15,13 +15,11 @@ class SportsManager {
       this.sports = await this.fetchSports();
     }
 
-    return (this.sports ?? DEFAULT_SPORTS_AVAILABLE).filter(
-      (x) => Boolean(x.admin) === isAdmin
-    );
+    return (this.sports ?? []).filter((x) => Boolean(x.admin) === isAdmin);
   }
 
-  static async getSports() {
-    return manager.getSports();
+  static async getSports(isAdmin = false) {
+    return manager.getSports(isAdmin);
   }
 
   async fetchSports() {
