@@ -71,7 +71,7 @@ const ENDPOINT_METADATA = {
   /* for sports */
   "/app/sports": {
     method: "GET",
-    tokenRequired: false,
+    tokenRequired: true,
     next: Controller.getSports,
   },
 };
