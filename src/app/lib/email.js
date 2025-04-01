@@ -115,7 +115,10 @@ exports.sendingEmailResult = async function (data, verifiedToken) {
   const categoryGrade = category.grade;
 
   const attachments = [];
-  const sportsList = await SportsManager.getSports();
+  const sportsList = (await SportsManager.getSports()).filter(
+    (x) => x.admin == false
+  );
+
   const csvRawString = await generateCsv(
     category_id,
     categoryGrade,
